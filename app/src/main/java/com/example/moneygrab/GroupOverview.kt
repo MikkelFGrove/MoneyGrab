@@ -125,6 +125,7 @@ fun GroupCard(name: String, modifier: Modifier = Modifier){
     Card(
         modifier = Modifier
             .fillMaxWidth(fraction = 0.9f)
+            .height(100.dp)
             .padding(vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -133,13 +134,15 @@ fun GroupCard(name: String, modifier: Modifier = Modifier){
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
 
     ) {
+        Box(modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center){
         Text(
             text = name,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.White
         )
+        }
     }
 }
 
