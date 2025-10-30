@@ -12,9 +12,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.chat.ChatScreen
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import com.example.moneygrab.views.GroupCreationView
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +32,9 @@ class MainActivity : ComponentActivity() {
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",
-        modifier = modifier
+        modifier = modifier,
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.primary
     )
 }
 
@@ -38,6 +42,12 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     MoneyGrabTheme {
-        Greeting("Android")
+        Scaffold (modifier = Modifier.fillMaxSize()){ innerPadding ->
+            Greeting(
+                name = "Android",
+                modifier = Modifier.padding(innerPadding)
+            )
+            GroupCreationView()
+        }
     }
 }
