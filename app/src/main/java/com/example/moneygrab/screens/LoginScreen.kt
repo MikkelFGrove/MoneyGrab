@@ -26,7 +26,7 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit) {
-    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var password by remember {mutableStateOf("")}
     Column(
         modifier = modifier
@@ -40,10 +40,11 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit) {
                 .padding(bottom = 12.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it},
-            label = { Text("Email")},
+            value = phone,
+            onValueChange = { phone = it},
+            label = { Text("Phone number")},
             singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth()
         )
 
