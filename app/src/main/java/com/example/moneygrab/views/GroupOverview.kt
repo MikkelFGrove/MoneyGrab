@@ -42,7 +42,7 @@ import com.example.moneygrab.R
 data class FrontendGroup(val id: Int, val name: String)
 
 @Composable
-fun GroupPage(groups: List<FrontendGroup>, modifier: Modifier = Modifier) {
+fun GroupPage(groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
     ){
@@ -101,7 +101,7 @@ fun GroupPage(groups: List<FrontendGroup>, modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.weight(1f))
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
-            onClick = {println("New group")},
+            onClick = onCreateGroupClicked,
             shape = MaterialTheme.shapes.extraLarge
         ){
             Text(text = "+",
@@ -147,6 +147,6 @@ fun GroupPreview() {
             FrontendGroup(1, "Årsfest"),
             FrontendGroup(2, "Sommerhus"),
             FrontendGroup(3, "Bytur")
-        ))
+        ),{})
     }
 }

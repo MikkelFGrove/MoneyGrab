@@ -13,18 +13,26 @@ import com.example.moneygrab.screens.HomeScreen
 import com.example.moneygrab.screens.LoginScreen
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.GroupCreationView
+import com.example.moneygrab.views.GroupPage
 
 class MainActivity : ComponentActivity() {
+    private lateinit var apiInterface: APIEndpoints
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MoneyGrabTheme {
                     NavManager()
-                }
             }
         }
     }
+
+    fun getApiInterface() {
+        apiInterface = RetrofitInstance.getInstance().create(APIEndpoints::class.java)
+    }
+}
 
 @Composable
 fun NavManager() {
@@ -32,10 +40,13 @@ fun NavManager() {
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            LoginScreen(onLoginClicked ={ navController.navigate("home")})
+            LoginScreen(onLoginClicked = { navController.navigate("groupPage")})
         }
-        composable("home"){
-            HomeScreen()
+        composable("groupPage") {
+            GroupPage(listOf(), {navController.navigate("groupCreation")})
+        }
+        composable("groupCreation") {
+            GroupCreationView()
         }
     }
 }
