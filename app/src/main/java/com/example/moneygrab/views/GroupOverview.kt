@@ -1,10 +1,10 @@
 package com.example.moneygrab.views
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,56 +41,65 @@ import com.example.moneygrab.R
 @Immutable
 data class FrontendGroup(val id: Int, val name: String)
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GroupPage(groups: List<FrontendGroup>, modifier: Modifier = Modifier) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ){
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E88E5)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ){
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = "Groups",
-                    fontSize = 45.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.weight(1f))
+    Box(modifier = modifier.fillMaxSize()) {
 
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_profile_placeholder),
-                        contentDescription = "Profile Picture",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.height(20.dp))
         LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 8.dp,
+                bottom = 96.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            stickyHeader {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1E88E5)), // background for proper stickiness
+                    shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E88E5)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "Groups",
+                            fontSize = 45.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_profile_placeholder),
+                                contentDescription = "Profile Picture",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                            )
+                        }
+                    }
+                }
+            }
+
             items(groups, key = { it.id }) { group ->
                 GroupCard(
                     name = group.name,
@@ -98,20 +107,26 @@ fun GroupPage(groups: List<FrontendGroup>, modifier: Modifier = Modifier) {
                 )
             }
         }
-        Spacer(modifier = Modifier.weight(1f))
+
+        // Sticky "+" button
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
-            onClick = {println("New group")},
-            shape = MaterialTheme.shapes.extraLarge
-        ){
-            Text(text = "+",
+            onClick = { println("New group") },
+            shape = MaterialTheme.shapes.extraLarge,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 10.dp) // matches your previous spacing
+        ) {
+            Text(
+                text = "+",
                 fontSize = 45.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White)
+                color = Color.White
+            )
         }
-        Spacer(modifier = Modifier.height(10.dp))
     }
 }
+
 
 @Composable
 fun GroupCard(name: String, modifier: Modifier = Modifier){
