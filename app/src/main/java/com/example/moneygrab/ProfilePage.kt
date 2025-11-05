@@ -18,8 +18,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
+
+data class PaymentMethod(
+    val brand: String,
+    val last4: String,
+    val expMonth: Int,
+    val expYear: Int
+)
+
 @Composable
 fun ProfilePage(
+    fullName: String,
+    email: String,
+    phoneNumber: String,
+    paymentMethods: List<PaymentMethod>,
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
@@ -74,21 +86,21 @@ fun ProfilePage(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Simple text info, maybe add more information later?
+        // Takes parameters fullName, email, phoneNumber
         Text(
-            text = "Magnussen R. Christensen",
+            text = fullName,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Text(
-            text = "magnussen@gmail.com",
+            text = email,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
         )
         Text(
-            text = "+45 42560809",
+            text = phoneNumber,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
@@ -126,24 +138,22 @@ fun ProfilePage(
             }
         }
 
-        // Should not be hardcoded, should take user input
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF1E88E5)
-            ),
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("•••• 1234", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Visa", color = Color.White.copy(alpha = 0.8f))
-                Text("Expires 04/27", color = Color.White.copy(alpha = 0.8f))
+
+
+        if (paymentMethods.isEmpty()) {
+            Text(
+                text = "No payment methods added yet.",
+                color = Color.Black,
+                fontSize = 18.sp,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .align (Alignment.CenterHorizontally)
+            )
+        } else {
+            paymentMethods.forEach { method ->
+                PaymentCard(method)
             }
         }
-
 
 
         Spacer(modifier = Modifier.weight(1f))
@@ -165,13 +175,55 @@ fun ProfilePage(
                 fontSize = 20.sp)
         }
     }
+
 }
+
+@Composable
+private fun PaymentCard(method: PaymentMethod) {
+    val masked = "•••• ${method.last4.takeLast(4)}"
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E88E5)), // background color
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = masked,
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = method.brand,
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 14.sp
+            )
+            Text(
+                text = "Expires %02d/%02d".format(method.expMonth, method.expYear % 100),
+                color = Color.White.copy(alpha = 0.9f),
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
 fun ProfilePagePreview() {
     MoneyGrabTheme {
-        ProfilePage()
+        ProfilePage(
+            fullName = "Magnussen R. Christensen",
+            email = "magnussen@gmail.com",
+            phoneNumber = "+45 42560809",
+            paymentMethods = listOf(
+                PaymentMethod("Visa", "4444", 8, 2027)
+            )
+        )
     }
 }
 
