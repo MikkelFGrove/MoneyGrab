@@ -48,7 +48,7 @@ fun NavManager() {
             LoginScreen(onLoginClicked = { navController.navigate("groupPage")})
         }
         composable("groupPage") {
-            GroupPage(listOf(), {navController.navigate("groupCreation")})
+            GroupPage(listOf(), { navController.navigate("groupCreation") })
         }
         composable ("addToExpense") {
             AddPayersView(

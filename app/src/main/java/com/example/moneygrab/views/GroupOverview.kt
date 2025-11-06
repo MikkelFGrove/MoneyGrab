@@ -43,7 +43,7 @@ data class FrontendGroup(val id: Int, val name: String)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GroupPage(groups: List<FrontendGroup>, modifier: Modifier = Modifier) {
+fun GroupPage(groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize()) {
 
         LazyColumn(
@@ -111,7 +111,7 @@ fun GroupPage(groups: List<FrontendGroup>, modifier: Modifier = Modifier) {
         // Sticky "+" button
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
-            onClick = { println("New group") },
+            onClick = onCreateGroupClicked,
             shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier
                 .align(Alignment.BottomCenter)

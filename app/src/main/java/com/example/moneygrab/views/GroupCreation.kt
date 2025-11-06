@@ -106,14 +106,6 @@ class GroupViewModel() : ViewModel() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun View() {
-    Scaffold (modifier = Modifier.fillMaxSize()){ innerPadding ->
-        GroupCreationView(modifier = Modifier.padding(innerPadding))
-    }
-}
-
 @Composable
 fun GroupCreationView(modifier: Modifier = Modifier, groupViewModel: GroupViewModel = viewModel()) {
     Column (
