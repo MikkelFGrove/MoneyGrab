@@ -19,18 +19,23 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddPayersView
 import com.example.moneygrab.views.TestData
 import com.example.moneygrab.views.GroupCreationView
+import com.example.moneygrab.views.GroupPage
 
 class MainActivity : ComponentActivity() {
+    private lateinit var apiInterface: APIEndpoints
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MoneyGrabTheme {
                     NavManager()
-                }
             }
         }
     }
+    
+}
 
 @Composable
 fun NavManager() {
@@ -40,15 +45,18 @@ fun NavManager() {
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            LoginScreen(onLoginClicked ={ navController.navigate("addToExpense")})
+            LoginScreen(onLoginClicked = { navController.navigate("groupPage")})
         }
-        composable("home"){
-            HomeScreen()
+        composable("groupPage") {
+            GroupPage(listOf(), {navController.navigate("groupCreation")})
         }
         composable ("addToExpense") {
             AddPayersView(
                 group = group
             )
+        }
+        composable("groupCreation") {
+            GroupCreationView()
         }
     }
 }

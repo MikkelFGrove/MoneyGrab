@@ -162,6 +162,6 @@ fun GroupPreview() {
             FrontendGroup(1, "Årsfest"),
             FrontendGroup(2, "Sommerhus"),
             FrontendGroup(3, "Bytur")
-        ))
+        ),{})
     }
 }
