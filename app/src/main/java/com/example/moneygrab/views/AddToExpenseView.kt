@@ -44,7 +44,6 @@ import com.example.debtcalculator.data.User
 import kotlin.time.TimeSource
 
 
-@Preview(showBackground = true)
 @Composable
 fun View() {
     val group = TestData()
@@ -61,7 +60,7 @@ fun TestData(): Group {
     val user2 = User("23412341","test2", null)
     val user3 = User("34123412","test3", null)
 
-    val expense = Expense("Test_expense",12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
+    val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
     val mark = TimeSource.Monotonic.markNow()
     val messages = Message(user1, "test", mark)
 
@@ -78,10 +77,11 @@ fun TestData(): Group {
 
 @Composable
 fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
+
     val isDropDownExpanded = remember { mutableStateOf(false) }
     val users = group.users.toList()
     val selectedUsers = remember { mutableStateListOf<User>() }
-    val expense = group.expenses.get(group.expenses.size-1)
+    val expense = group.expenses[group.expenses.size-1]
 
     Column(
         modifier = modifier
@@ -91,7 +91,7 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Select people to pay for ${expense.name}",
+            text = "Select people to pay for ${expense.description}",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
@@ -178,4 +178,33 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
         }
 
     }
+
+}
+@Preview(showBackground = true)
+@Composable
+fun AddToExpenseView() {
+    val group = testData()
+
+    Scaffold (modifier = Modifier.fillMaxSize()){ innerPadding ->
+        AddPayersView(modifier = Modifier.padding(innerPadding), group = group)
+    }
+}
+
+@Composable
+fun testData(): Group {
+    val user1 = User("13241234","test1", null)
+    val user2 = User("23412341","test2", null)
+    val user3 = User("34123412","test3", null)
+
+    val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
+    val mark = TimeSource.Monotonic.markNow()
+    val messages = Message(user1, "test", mark)
+
+    val group = Group(
+        name = "Weekend trip",
+        users = setOf(user1, user2, user3),
+        expenses = arrayOf(expense),
+        messages = arrayOf(messages)
+    )
+    return group
 }
