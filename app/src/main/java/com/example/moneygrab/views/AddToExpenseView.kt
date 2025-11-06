@@ -163,7 +163,10 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
 
         Button(
             onClick = { val updatedExpense = expense.copy(payers = selectedUsers.toTypedArray())
-                        val updatedGroup = group.copy()
+                        val updatedGroup = group.copy(expenses = group.expenses.copyOf().apply {
+                            this[this.lastIndex] = updatedExpense
+                        })
+                        println(updatedGroup)
                       },
             modifier = Modifier.padding(horizontal = 14.dp).height(64.dp),
             shape = RoundedCornerShape(12.dp),
