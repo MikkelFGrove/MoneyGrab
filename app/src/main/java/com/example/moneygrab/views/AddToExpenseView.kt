@@ -61,7 +61,7 @@ fun TestData(): Group {
     val user2 = User("23412341","test2", null)
     val user3 = User("34123412","test3", null)
 
-    val expense = Expense("Test_expense",12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
+    val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
     val mark = TimeSource.Monotonic.markNow()
     val messages = Message(user1, "test", mark)
 
@@ -91,7 +91,7 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Select people to pay for ${expense.name}",
+            text = "Select people to pay for ${expense.description}",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp

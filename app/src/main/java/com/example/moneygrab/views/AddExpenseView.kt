@@ -21,14 +21,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.debtcalculator.data.Expense
+import com.example.debtcalculator.data.Group
 
 
 @Composable
-fun PaymentInputView() {
+fun AddExpenseView(group: Group, addToExpense: () -> Unit) {
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-        Button(modifier = Modifier.padding(start= 10.dp, top = 10.dp), onClick = {println("MI BOMBACLAT")}) {
+        Button(modifier = Modifier.padding(start= 10.dp, top = 10.dp), onClick = addToExpense) {
             Text("Back")
         }
 
@@ -60,7 +62,19 @@ fun PaymentInputView() {
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Add Text") })
         Button(
-            onClick = {println("MI BOMBACLAT")},
+            onClick = {
+                var expense = Expense(
+                    amount.toFloat(),
+                    description = description,
+                    //CHANGE THIS WHEN AUTH CONTEXT
+                    lender = group.users.first(),
+                    payers = group.users.toTypedArray()
+                )
+
+
+
+                println(expense)
+                      },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Add Participants")
@@ -70,8 +84,7 @@ fun PaymentInputView() {
 
 @Preview(showBackground = true)
 @Composable
-fun PaymentInputViewPreview() {
+fun AddExpenseView() {
     MaterialTheme {
-        PaymentInputView()
     }
 }

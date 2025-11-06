@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import com.example.debtcalculator.data.Expense
+import com.example.debtcalculator.data.Group
+import com.example.moneygrab.views.TestData
 
 data class MoneyRequest(val text: String, val isMine: Boolean)
 
@@ -79,9 +82,10 @@ fun TopBar(groupName: String, calculatedSum: Double) {
 
 
 @Composable
-fun Bubbles(moneyRequest: MoneyRequest) {
+fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
-    val bubbleColor = if (moneyRequest.isMine) {
+    //This needs to be implemented again when login authcontext is up and running
+    /* val bubbleColor = if (moneyRequest.isMine) {
         colors.primary
     } else {
         colors.primary.copy(alpha = 0.2f)
@@ -91,13 +95,14 @@ fun Bubbles(moneyRequest: MoneyRequest) {
         Color.White
     } else {
         Color.Black
-    }
-
+    }*/
+    val bubbleColor = colors.primary
+    val textColor = Color.White
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp, horizontal = 10.dp),
-        horizontalArrangement = if (moneyRequest.isMine) Arrangement.End else Arrangement.Start
+        horizontalArrangement = Arrangement.Start /*if (moneyRequest.isMine) Arrangement.End else Arrangement.Start*/
     ) {
         Surface(
             color = bubbleColor,
@@ -105,7 +110,7 @@ fun Bubbles(moneyRequest: MoneyRequest) {
             tonalElevation = 2.dp
         ) {
             Text(
-                text = moneyRequest.text,
+                text = moneyRequest.description,
                 color = textColor,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
             )
@@ -115,7 +120,7 @@ fun Bubbles(moneyRequest: MoneyRequest) {
 
 
 @Composable
-fun MessagesList(messages: List<MoneyRequest>, modifier: Modifier = Modifier) {
+fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 8.dp)
@@ -127,11 +132,11 @@ fun MessagesList(messages: List<MoneyRequest>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun InputBar(currentText: String, onTextChange: (String) -> Unit, ) {
+fun InputBar(addExpense: () -> Unit) {
     Surface (modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp)
     {
         Button(
-            onClick = {println("MI BOMBACLAT")},
+            onClick = addExpense,
             modifier = Modifier
                 .padding(start= 50.dp, end = 50.dp, top = 5.dp, bottom = 5.dp),
             shape = RoundedCornerShape(5.dp)
@@ -145,60 +150,33 @@ fun InputBar(currentText: String, onTextChange: (String) -> Unit, ) {
 }
 
 @Composable
-fun ChatScreen(groupName: String, messages: List<MoneyRequest>, calculatedSum: Double) {
-    var inputText by remember { mutableStateOf("") }
-    messages.toMutableStateList()
+fun ChatScreen(group: Group, addExpense: () -> Unit) {
+    group.expenses.toMutableList()
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
-            groupName = groupName,
-            calculatedSum = calculatedSum
+            groupName = group.name,
+            //Change to API-call 😁
+            calculatedSum = 0.00
         )
 
         MessagesList(
-            messages = messages,
+            messages = group.expenses.toMutableList(),
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         )
 
-        InputBar(
-            currentText = inputText,
-            onTextChange = { inputText = it },
-        )
+        InputBar(addExpense)
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun ChatScreenPreview() {
+    val group = TestData()
     MaterialTheme {
-        ChatScreen(groupName = "Meow", messages = remember {mutableStateListOf(
-            MoneyRequest("Magnus: 3kr (broke ass)", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("You: 30 mil", isMine = true),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-            MoneyRequest("Andreas: 30kr", isMine = false),
-        )}, calculatedSum = 0.toDouble())
+        ChatScreen(group = group, addExpense = {println("Norway")}
+        )
     }
 }
