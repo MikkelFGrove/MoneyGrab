@@ -3,6 +3,7 @@ package com.example.moneygrab.views
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,7 +44,7 @@ data class FrontendGroup(val id: Int, val name: String)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GroupPage(groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun GroupPage(onProfileClicked: () -> Unit, groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize()) {
 
         LazyColumn(
@@ -86,6 +87,7 @@ fun GroupPage(groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, mod
                                 .size(100.dp)
                                 .clip(CircleShape)
                                 .background(Color.White)
+                                .clickable(onClick = onProfileClicked)
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_profile_placeholder),
@@ -158,10 +160,14 @@ fun GroupCard(name: String, modifier: Modifier = Modifier){
 @Composable
 fun GroupPreview() {
     MoneyGrabTheme {
-        GroupPage(groups = listOf(
-            FrontendGroup(1, "Årsfest"),
-            FrontendGroup(2, "Sommerhus"),
-            FrontendGroup(3, "Bytur")
-        ),{})
+        GroupPage(
+            onProfileClicked = {},
+            groups = listOf(
+                FrontendGroup(1, "Årsfest"),
+                FrontendGroup(2, "Sommerhus"),
+                FrontendGroup(3, "Bytur")
+            ),
+            onCreateGroupClicked = {}
+        )
     }
 }
