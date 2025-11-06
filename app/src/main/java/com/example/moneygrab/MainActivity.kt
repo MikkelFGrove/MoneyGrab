@@ -45,11 +45,20 @@ fun NavManager() {
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            LoginScreen(onLoginClicked = { navController.navigate("groupPage")})
+            LoginScreen(onLoginClicked = { navController.navigate("GroupOverview")})
         }
-        composable("groupPage") {
-            GroupPage(listOf(), { navController.navigate("groupCreation") })
+        composable("GroupOverview") {
+            GroupPage(
+                groups = listOf(),
+                onProfileClicked = { navController.navigate("ProfilePage") },
+                onCreateGroupClicked = { navController.navigate("CreateGroup") }
+            )
         }
+
+        composable("ProfilePage") {
+            ProfilePagePreview()
+        }
+
         composable ("addToExpense") {
             AddPayersView(
                 group = group
