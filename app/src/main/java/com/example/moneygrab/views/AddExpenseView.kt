@@ -45,7 +45,7 @@ fun PaymentInputView() {
         ) {
             TextField(
                 value = amount,
-                onValueChange = { description = it },
+                onValueChange = { amount = it },
                 modifier = Modifier.weight(1f)
                     .padding(end = 10.dp),
                 placeholder = { Text("Amount") },
@@ -54,7 +54,11 @@ fun PaymentInputView() {
             Text("DKK", style = MaterialTheme.typography.bodyLarge)
         }
 
-        TextField(value = description, onValueChange = { description = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Add Text") })
+        TextField(
+            value = description,
+            onValueChange = { description = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Add Text") })
         Button(
             onClick = {println("MI BOMBACLAT")},
             modifier = Modifier.fillMaxWidth()
