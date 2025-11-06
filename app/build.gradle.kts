@@ -51,6 +51,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    //for rememberImagePainter and image loading functionality
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    // retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    // gson converter
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

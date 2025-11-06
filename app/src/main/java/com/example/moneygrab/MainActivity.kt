@@ -28,10 +28,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    fun getApiInterface() {
-        apiInterface = RetrofitInstance.getInstance().create(APIEndpoints::class.java)
-    }
+    
 }
 
 @Composable

@@ -2,10 +2,8 @@ package com.example.moneygrab.views
 
 
 import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,21 +29,16 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,52 +51,58 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.example.moneygrab.MainActivity
-import com.example.moneygrab.RetrofitInstance
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.moneygrab.RetrofitClient
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 data class User (
     val name: String,
     val phoneNumber: Number
 )
 
-class GroupViewModel : ViewModel() {
-    private var _image: StateFlow<Bitmap?> = MutableStateFlow(null)
-    val image: StateFlow<Bitmap?> get() = _image
-    private var _groupName = MutableStateFlow("")
-    val groupName: StateFlow<String> get() = _groupName
-    private var _groupUsers = MutableStateFlow<MutableList<User>>(mutableListOf())
-    val groupUsers: StateFlow<MutableList<User>> get() = _groupUsers
-
-    private var _searchResult = MutableStateFlow<MutableList<User>>(mutableListOf())
-    val searchResult: StateFlow<MutableList<User>> get() = _searchResult
-
-    fun storePhoto(uri: Uri) {
-    }
-
-    fun setGroupName(name: String) {
-        _groupName.value = name
-    }
+class GroupViewModel() : ViewModel() {
+    var chosenUsers = mutableStateListOf<User>()
+    var searchResult = mutableStateListOf<User>()
+    var groupName = mutableStateOf("")
+    var image = mutableStateOf<Bitmap?>(null)
 
     fun getSuggestedUsers(searchString: String) {
-        _searchResult.value = mutableListOf<User>(User("Person 1", 12345678))
+        searchResult.clear()
+        searchResult.addAll(
+            mutableListOf(
+                User(searchString, 12345678),
+                User(searchString, 87654321),
+                User(searchString, 12345678),
+                User(searchString, 87654321),
+                User(searchString, 12345678),
+                User(searchString, 87654321),
+                User(searchString, 12345678),
+                User(searchString, 87654321),
+                User(searchString, 12345678),
+                User(searchString, 87654321),
+                User(searchString, 12345678),
+                User(searchString, 87654321),
+            )
+        )
+        /*viewModelScope.launch {
+            val response = retrofitClient.api.getSuggestedUsers(searchString)
+            searchResult.addAll(response)
+        }*/
     }
 
-    fun addUser(user: User) {
-        _groupUsers.value.add(user)
+    fun printChosen() {
+        println(chosenUsers)
     }
 }
 
@@ -124,23 +123,23 @@ fun GroupCreationView(modifier: Modifier = Modifier, groupViewModel: GroupViewMo
     ) {
         ImageButton(groupViewModel)
 
-        val groupName by groupViewModel.groupName.collectAsState()
+        var groupName by groupViewModel.groupName
         OutlinedTextField (
             value = groupName,
             label = { Text("Name") },
-            onValueChange = { groupViewModel.setGroupName(it) },
+            onValueChange = { groupName = it },
             modifier = Modifier
                 .fillMaxWidth(0.85f)
         )
 
-        AccountSearchBar()
+        AccountSearchBar(groupViewModel)
 
         CreateButton(groupViewModel)
     }
 }
 
 @Composable
-fun CreateButton(groupViewModel: GroupViewModel = viewModel()) {
+fun CreateButton(groupViewModel: GroupViewModel) {
     Card (
         modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
@@ -160,20 +159,32 @@ fun CreateButton(groupViewModel: GroupViewModel = viewModel()) {
 }
 
 @Composable
-fun ImageButton(groupViewModel: GroupViewModel = viewModel()) {
+fun ImageButton(groupViewModel: GroupViewModel) {
     var imageUri: Uri? by remember { mutableStateOf(null) }
+    val context = LocalContext.current
+    var image by groupViewModel.image
 
     val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
             imageUri = uri
-            groupViewModel.storePhoto(uri)
+            val loader = ImageLoader(context)
+            val req = ImageRequest.Builder(context)
+                .data(imageUri)
+                .target { result ->
+                     image = (result as BitmapDrawable).bitmap
+                }
+                .build()
+
+            val disposable = loader.enqueue(req)
         } else {
             println("Failed")
         }
     }
 
     Button (
-        modifier = Modifier.fillMaxWidth(0.85f).height(200.dp),
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .height(200.dp),
         contentPadding = PaddingValues(0.dp, 0.dp),
         colors = ButtonColors(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, Color.Transparent, Color.Transparent),
         shape = MaterialTheme.shapes.large,
@@ -234,7 +245,9 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column (
-                modifier = Modifier.fillMaxHeight().padding(15.dp, 10.dp),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(15.dp, 10.dp),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -247,7 +260,6 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
             }
             FilledIconButton(
                 onClick = { onClick(user) },
-                //onClick = { println("Removed " + user.name) },
                 colors = IconButtonColors(
                     Color.Transparent,
                     Color.Red,
@@ -264,33 +276,17 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountSearchBar() {
+fun AccountSearchBar(groupViewModel: GroupViewModel) {
     Column (
         modifier = Modifier.fillMaxHeight(0.75f),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         var searchString by remember { mutableStateOf("") }
-        //var searchResult = remember { mutableListOf<User>().toMutableStateList() }
-        var chosenUsers = remember { mutableListOf<User>().toMutableStateList() }
         var expanded by remember { mutableStateOf(true) }
         val focusRequester = remember { FocusRequester() }
-
-        var searchResult = remember { mutableListOf(
-            User("Name 1", 12345678),
-            User("Name 2", 87654321),
-            User("Name 1", 12345678),
-            User("Name 2", 87654321),
-            User("Name 1", 12345678),
-            User("Name 2", 87654321),
-            User("Name 1", 12345678),
-            User("Name 2", 87654321),
-            User("Name 1", 12345678),
-            User("Name 2", 87654321),
-            User("Name 1", 12345678),
-            User("Name 2", 87654321),
-        ).toMutableStateList() }
+        val chosenUsers = groupViewModel.chosenUsers
+        val searchResult = groupViewModel.searchResult
 
         Box(
             modifier = Modifier
@@ -303,6 +299,7 @@ fun AccountSearchBar() {
                     .focusRequester(focusRequester),
                 onValueChange = {
                     searchString = it
+                    groupViewModel.getSuggestedUsers(it)
 
                     focusRequester.requestFocus()
 
@@ -315,7 +312,9 @@ fun AccountSearchBar() {
             DropdownMenu (
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.fillMaxWidth(0.85f).height(300.dp)
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .height(300.dp)
             ) {
                 searchResult.forEach { user ->
                     DropdownMenuItem(
@@ -335,6 +334,7 @@ fun AccountSearchBar() {
                         onClick = {
                             chosenUsers.add(user)
                             searchResult.remove(user)
+                            groupViewModel.printChosen()
                         }
                     )
                 }
