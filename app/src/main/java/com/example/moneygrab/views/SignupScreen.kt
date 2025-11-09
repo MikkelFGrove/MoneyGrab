@@ -1,4 +1,4 @@
-package com.example.moneygrab.screens
+package com.example.moneygrab.views
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions

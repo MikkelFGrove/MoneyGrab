@@ -1,4 +1,4 @@
-package com.example.moneygrab.screens
+package com.example.moneygrab.views
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
