@@ -29,33 +29,27 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,7 +57,6 @@ import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.moneygrab.RetrofitClient
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 data class User (
@@ -71,43 +64,47 @@ data class User (
     val phoneNumber: Number
 )
 
-class GroupViewModel() : ViewModel() {
+data class GroupData (
+    val name: String,
+    val users: List<User>
+)
+
+class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient()) : ViewModel() {
     var chosenUsers = mutableStateListOf<User>()
     var searchResult = mutableStateListOf<User>()
     var groupName = mutableStateOf("")
     var image = mutableStateOf<Bitmap?>(null)
 
-    fun getSuggestedUsers(searchString: String) {
-        searchResult.clear()
-        searchResult.addAll(
-            mutableListOf(
-                User(searchString, 12345678),
-                User(searchString, 87654321),
-                User(searchString, 12345678),
-                User(searchString, 87654321),
-                User(searchString, 12345678),
-                User(searchString, 87654321),
-                User(searchString, 12345678),
-                User(searchString, 87654321),
-                User(searchString, 12345678),
-                User(searchString, 87654321),
-                User(searchString, 12345678),
-                User(searchString, 87654321),
-            )
-        )
-        /*viewModelScope.launch {
-            val response = retrofitClient.api.getSuggestedUsers(searchString)
-            searchResult.addAll(response)
-        }*/
+    fun storeImage(img: Bitmap?) {
+        image.value = img
     }
 
-    fun printChosen() {
-        println(chosenUsers)
+    fun getSuggestedUsers(searchString: String) {
+        viewModelScope.launch {
+            try {
+                val response = retrofitClient.api.getSuggestedUsers(searchString)
+                searchResult.clear()
+                searchResult.addAll(response)
+            } catch (e: Exception) {
+                println(e.message)
+            }
+        }
+    }
+
+    fun createGroup() {
+        viewModelScope.launch {
+            try {
+                retrofitClient.api.createGroup(GroupData(groupName.value, chosenUsers))
+            } catch (e: Exception) {
+                println(e.message)
+            }
+        }
     }
 }
 
 @Composable
-fun GroupCreationView(modifier: Modifier = Modifier, groupViewModel: GroupViewModel = viewModel()) {
+fun GroupCreationView(onCreateGroupNavigation: () -> Unit, modifier: Modifier = Modifier) {
+    val groupViewModel: GroupViewModel = viewModel()
     Column (
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -126,22 +123,25 @@ fun GroupCreationView(modifier: Modifier = Modifier, groupViewModel: GroupViewMo
 
         AccountSearchBar(groupViewModel)
 
-        CreateButton(groupViewModel)
+        CreateButton(groupViewModel, onCreateGroupNavigation)
     }
 }
 
 @Composable
-fun CreateButton(groupViewModel: GroupViewModel) {
+fun CreateButton(groupViewModel: GroupViewModel, navigate: () -> Unit) {
     Card (
         modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
             .background(Color.Transparent),
     ) {
-        Button(
-            onClick = { println(groupViewModel.groupName.value) },
+        Button (
+            onClick = {
+                groupViewModel.createGroup()
+                navigate()
+            },
             shape = MaterialTheme.shapes.small,
         ) {
-            Text(
+            Text (
                 text = "Create Group",
                 fontSize = 4.em,
                 modifier = Modifier.padding(5.dp)
@@ -154,7 +154,6 @@ fun CreateButton(groupViewModel: GroupViewModel) {
 fun ImageButton(groupViewModel: GroupViewModel) {
     var imageUri: Uri? by remember { mutableStateOf(null) }
     val context = LocalContext.current
-    var image by groupViewModel.image
 
     val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -163,11 +162,11 @@ fun ImageButton(groupViewModel: GroupViewModel) {
             val req = ImageRequest.Builder(context)
                 .data(imageUri)
                 .target { result ->
-                     image = (result as BitmapDrawable).bitmap
+                    val bitmap = (result as BitmapDrawable).bitmap
+                    groupViewModel.storeImage(bitmap)
                 }
                 .build()
-
-            val disposable = loader.enqueue(req)
+            loader.enqueue(req)
         } else {
             println("Failed")
         }
@@ -225,7 +224,7 @@ fun PeopleList(users: SnapshotStateList<User>, onClick: (User) -> Unit) {
 
 @Composable
 fun PeopleCard(user: User, onClick: (User) -> Unit) {
-    Card(
+    Card (
         modifier = Modifier
             .fillMaxWidth(0.85f),
         shape = MaterialTheme.shapes.small,
@@ -242,15 +241,15 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
                     .padding(15.dp, 10.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
+                Text (
                     text = user.name,
                 )
-                Text(
+                Text (
                     text = user.phoneNumber.toString(),
                     color = Color.Gray
                 )
             }
-            FilledIconButton(
+            FilledIconButton (
                 onClick = { onClick(user) },
                 colors = IconButtonColors(
                     Color.Transparent,
@@ -260,10 +259,11 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
                 ),
                 modifier = Modifier.padding(5.dp, 5.dp)
             ) {
-                Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Remove Person",
-            ) }
+                Icon (
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Remove Person",
+                    )
+            }
         }
     }
 }
@@ -275,25 +275,21 @@ fun AccountSearchBar(groupViewModel: GroupViewModel) {
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         var searchString by remember { mutableStateOf("") }
-        var expanded by remember { mutableStateOf(true) }
-        val focusRequester = remember { FocusRequester() }
+        var expanded by remember { mutableStateOf(false) }
         val chosenUsers = groupViewModel.chosenUsers
         val searchResult = groupViewModel.searchResult
 
-        Box(
+        Box (
             modifier = Modifier
         ) {
             OutlinedTextField (
                 value = searchString,
                 label = { Text("People") },
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
-                    .focusRequester(focusRequester),
+                    .fillMaxWidth(0.85f),
                 onValueChange = {
                     searchString = it
-                    groupViewModel.getSuggestedUsers(it)
-
-                    focusRequester.requestFocus()
+                    groupViewModel.getSuggestedUsers(searchString)
 
                     if (searchResult.isNotEmpty() && !expanded) {
                         expanded = true
@@ -304,19 +300,19 @@ fun AccountSearchBar(groupViewModel: GroupViewModel) {
             DropdownMenu (
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
+                properties = PopupProperties(focusable = false),
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .height(300.dp)
             ) {
                 searchResult.forEach { user ->
-                    DropdownMenuItem(
+                    DropdownMenuItem (
                         text = {
-                            Column (
-                            ) {
-                                Text(
+                            Column {
+                                Text (
                                     text = user.name
                                 )
-                                Text(
+                                Text (
                                     color = Color.Gray,
                                     text = user.phoneNumber.toString()
                                 )
@@ -326,14 +322,13 @@ fun AccountSearchBar(groupViewModel: GroupViewModel) {
                         onClick = {
                             chosenUsers.add(user)
                             searchResult.remove(user)
-                            groupViewModel.printChosen()
                         }
                     )
                 }
             }
         }
 
-        PeopleList(
+        PeopleList (
             users = chosenUsers,
             onClick = { user -> chosenUsers.remove(user) }
         )

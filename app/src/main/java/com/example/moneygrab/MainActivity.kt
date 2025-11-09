@@ -4,16 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.debtcalculator.data.Group
-import com.example.moneygrab.screens.HomeScreen
-import com.example.moneygrab.screens.LoginScreen
+import com.example.moneygrab.views.LoginScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddPayersView
@@ -56,7 +52,7 @@ fun NavManager() {
             )
         }
         composable("groupCreation") {
-            GroupCreationView()
+            GroupCreationView({ navController.navigate("groupPage") })
         }
     }
 }
