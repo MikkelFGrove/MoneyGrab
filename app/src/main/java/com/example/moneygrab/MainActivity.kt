@@ -60,7 +60,7 @@ fun NavManager() {
         }
 
         composable("ProfilePage") {
-            ProfilePagePreview()
+
         }
 
         composable ("addToExpense") {

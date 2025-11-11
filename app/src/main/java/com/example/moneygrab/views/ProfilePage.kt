@@ -22,6 +22,11 @@ import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
+data class CredentialMethod(
+    val fullName: String,
+    val email: String,
+    val phoneNumber: String
+)
 
 data class PaymentMethod(
     val brand: String,
@@ -102,19 +107,19 @@ fun ProfilePage(
 
         // Takes parameters fullName, email, phoneNumber
         Text(
-            text = fullName,
+            text = credentialMethod.fullName,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Text(
-            text = email,
+            text = credentialMethod.email,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
         )
         Text(
-            text = phoneNumber,
+            text = credentialMethod.phoneNumber,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
@@ -240,6 +245,5 @@ fun ProfilePagePreview() {
         )
     }
 }*/
-
 
 
