@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
+data class CredentialMethod(
+    val fullName: String,
+    val email: String,
+    val phoneNumber: String
+)
 
 data class PaymentMethod(
     val brand: String,
@@ -28,9 +33,7 @@ data class PaymentMethod(
 
 @Composable
 fun ProfilePage(
-    fullName: String,
-    email: String,
-    phoneNumber: String,
+    credentialMethod: CredentialMethod,
     paymentMethods: List<PaymentMethod>,
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
@@ -88,19 +91,19 @@ fun ProfilePage(
 
         // Takes parameters fullName, email, phoneNumber
         Text(
-            text = fullName,
+            text = credentialMethod.fullName,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Text(
-            text = email,
+            text = credentialMethod.email,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
         )
         Text(
-            text = phoneNumber,
+            text = credentialMethod.phoneNumber,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
@@ -211,21 +214,6 @@ private fun PaymentCard(method: PaymentMethod) {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun ProfilePagePreview() {
-    MoneyGrabTheme {
-        ProfilePage(
-            fullName = "Magnussen R. Christensen",
-            email = "magnussen@gmail.com",
-            phoneNumber = "+45 42560809",
-            paymentMethods = listOf(
-                PaymentMethod("Visa", "4444", 8, 2027)
-            )
-        )
-    }
-}
 
 
 
