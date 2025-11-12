@@ -1,7 +1,9 @@
 package com.example.moneygrab.views
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +37,7 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
+fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSignupClicked: () -> Unit) {
     var phone by remember { mutableStateOf("") }
     var password by remember {mutableStateOf("")}
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -103,6 +106,23 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
             Text(it, color = Color.Red)
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Don’t have an account? ")
+
+            Text(
+                text = "Sign up",
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .clickable { onSignupClicked() }
+            )
+        }
     }
 }
 
@@ -119,6 +139,9 @@ suspend fun loginUser(phone: String, password: String): User {
 @Composable
 fun LoginScreenPreview() {
     MoneyGrabTheme {
-        LoginScreen(onLoginSuccess = {})
+        LoginScreen(
+            onLoginClicked = {},
+            onSignupClicked = {}
+        )
     }
 }

@@ -131,6 +131,8 @@ suspend fun signUpUser(name: String, email: String, phone: String, password: Str
 @Composable
 fun SignUpScreenPreview() {
     MoneyGrabTheme {
-        SignUpScreen { _, _, _, _ -> }
+        SignUpScreen(
+            onSignUpClicked = { _, _, _, _ -> }
+        )
     }
 }*/

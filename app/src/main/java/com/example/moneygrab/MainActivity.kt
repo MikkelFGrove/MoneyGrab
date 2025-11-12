@@ -9,6 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.chat.ChatScreen
+import com.example.debtcalculator.data.Group
+import com.example.moneygrab.screens.HomeScreen
+import com.example.moneygrab.screens.LoginScreen
+import com.example.moneygrab.screens.SignUpScreen
+import com.example.moneygrab.views.FrontendGroup
 import com.example.moneygrab.views.LoginScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
@@ -19,6 +25,7 @@ import com.example.moneygrab.views.GroupPage
 import com.example.moneygrab.views.ProfilePage
 import com.example.moneygrab.views.SignUpScreen
 import java.sql.SQLOutput
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var apiInterface: APIEndpoints
@@ -49,18 +56,42 @@ fun NavManager() {
         }
 
         composable("login") {
-            LoginScreen(onLoginClicked = { navController.navigate("GroupOverview")})
+            LoginScreen(
+                onLoginClicked = { navController.navigate("groupPage")},
+                onSignupClicked = { navController.navigate("signUp")}
+            )
         }
-        composable("GroupOverview") {
+
+        composable("signUp") {
+            SignUpScreen { name, email, phone, password ->
+                navController.navigate("groupPage")
+            }
+        }
+
+        composable("groupPage") {
             GroupPage(
-                groups = listOf(),
+                groups = emptyList<FrontendGroup>(),
                 onProfileClicked = { navController.navigate("ProfilePage") },
-                onCreateGroupClicked = { navController.navigate("CreateGroup") }
+                onCreateGroupClicked = { navController.navigate("groupCreation")}
             )
         }
 
         composable("ProfilePage") {
+            ProfilePage(
+                credentialMethod = CredentialMethod(
+                    fullName = "43",
+                    email = "43",
+                    phoneNumber = "43"
+                ),
+                paymentMethods = emptyList(),
+                onBackClick = { navController.popBackStack() },
+                onLogoutClick = { navController.navigate("login") }
+                //onEditClick = { },
+            )
+        }
 
+        composable("groupCreation") {
+            GroupCreationView()
         }
 
         composable ("addToExpense") {
@@ -68,9 +99,7 @@ fun NavManager() {
                 group = group
             )
         }
-        composable("groupCreation") {
-            GroupCreationView({ navController.navigate("groupPage") })
-        }
+
     }
 }
 
