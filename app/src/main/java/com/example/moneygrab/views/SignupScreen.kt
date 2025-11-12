@@ -8,22 +8,32 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.moneygrab.CurrentUser
+import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import kotlinx.coroutines.launch
+import com.example.debtcalculator.data.User
 
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    onSignUpClicked: (name: String, email: String, phone: String, password: String) -> Unit
+    onSignUpSuccess: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = modifier
@@ -82,23 +92,45 @@ fun SignUpScreen(
         Spacer(Modifier.height(20.dp))
 
         Button(
-            onClick = { onSignUpClicked(name, email, phone, password) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
+            onClick = {
+                scope.launch {
+                    try {
+                        val user = signUpUser(name, email, phone, password)
+                        currentUser.saveUser(user)
+                        onSignUpSuccess()
+                    } catch (e: Exception) {
+                        errorMessage = "Buhu"
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(48.dp)
         ) {
-            Text(
-                text = "Create account",
-                fontSize = 18.sp
-            )
+            Text("Create account", fontSize = 18.sp)
+        }
+
+        errorMessage?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(it, color = Color.Red)
         }
     }
 }
 
-@Preview(showBackground = true)
+suspend fun signUpUser(name: String, email: String, phone: String, password: String): User {
+    val api = RetrofitClient().api
+    return try {
+        api.signup(
+            mapOf("name" to name, "email" to email, "phone" to phone, "password" to password
+            )
+        )
+    } catch (e: Exception) {
+        User(phoneNumber = phone, name = name, image = null)
+    }
+}
+
+/*@Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
     MoneyGrabTheme {
         SignUpScreen { _, _, _, _ -> }
     }
-}
+}*/

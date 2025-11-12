@@ -7,15 +7,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
@@ -29,15 +32,25 @@ data class PaymentMethod(
 
 @Composable
 fun ProfilePage(
-    fullName: String,
-    email: String,
-    phoneNumber: String,
-    paymentMethods: List<PaymentMethod>,
+
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     onManageCardsClick: () -> Unit = {}
-) {
+)
+
+{
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
+
+    val fullName: String = currentUser.getUser()?.name ?: "null"
+
+    val phoneNumber: String = currentUser.getUser()?.phoneNumber ?: "null"
+
+    //get from user or remove
+    val email = "Sigma Grandpa 67"
+    val paymentMethods: List<PaymentMethod> = emptyList()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -213,7 +226,7 @@ private fun PaymentCard(method: PaymentMethod) {
 }
 
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun ProfilePagePreview() {
     MoneyGrabTheme {
@@ -226,7 +239,7 @@ fun ProfilePagePreview() {
             )
         )
     }
-}
+}*/
 
 
 

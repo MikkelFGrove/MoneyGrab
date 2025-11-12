@@ -16,6 +16,9 @@ import com.example.moneygrab.views.AddPayersView
 import com.example.moneygrab.views.TestData
 import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupPage
+import com.example.moneygrab.views.ProfilePage
+import com.example.moneygrab.views.SignUpScreen
+import java.sql.SQLOutput
 
 class MainActivity : ComponentActivity() {
     private lateinit var apiInterface: APIEndpoints
@@ -39,12 +42,25 @@ fun NavManager() {
 
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "login") {
+    NavHost(navController = navController, startDestination = "signup") {
+        composable("signup") {
+            SignUpScreen(onSignUpSuccess = {navController.navigate("pPage")
+            })
+        }
+
         composable("login") {
-            LoginScreen(onLoginClicked = { navController.navigate("groupPage")})
+            LoginScreen(onLoginSuccess = { navController.navigate("pPage")})
         }
         composable("groupPage") {
             GroupPage(listOf(), { navController.navigate("groupCreation") })
+        }
+        composable("ppage") {
+            ProfilePage(
+                onBackClick = { println("Sigma back") },
+                onEditClick = { println("Sigma back") },
+                onLogoutClick = { println("Sigma back") },
+                onManageCardsClick = { println("Sigma back") }
+            )
         }
         composable ("addToExpense") {
             AddPayersView(

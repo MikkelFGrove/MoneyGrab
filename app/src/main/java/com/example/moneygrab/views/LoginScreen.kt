@@ -15,19 +15,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.moneygrab.APIEndpoints
+import com.example.moneygrab.CurrentUser
+import com.example.debtcalculator.data.User
+
+import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit) {
+fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
     var phone by remember { mutableStateOf("") }
     var password by remember {mutableStateOf("")}
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
+    val scope = rememberCoroutineScope()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -63,14 +76,42 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = onLoginClicked,
+            onClick = {
+                scope.launch {
+                    val user = try {
+                        loginUser(phone, password)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    println(user?.phoneNumber)
+                    if (user != null) {
+                        currentUser.saveUser(user)
+                        onLoginSuccess()
+                    } else {
+                        errorMessage = "Buhu"
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(48.dp),
         ) {
             Text("Login")
         }
+        errorMessage?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(it, color = Color.Red)
+        }
 
+    }
+}
+
+suspend fun loginUser(phone: String, password: String): User {
+    val api = RetrofitClient().api
+    return try {
+        api.login(mapOf("phone" to phone, "password" to password))
+    } catch (e: Exception) {
+        User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
     }
 }
 
@@ -78,6 +119,6 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit) {
 @Composable
 fun LoginScreenPreview() {
     MoneyGrabTheme {
-        LoginScreen(onLoginClicked = {})
+        LoginScreen(onLoginSuccess = {})
     }
 }
