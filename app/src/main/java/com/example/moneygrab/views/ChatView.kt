@@ -25,7 +25,7 @@ import com.example.moneygrab.views.TestData
 data class MoneyRequest(val text: String, val isMine: Boolean)
 
 @Composable
-fun TopBar(groupName: String, calculatedSum: Double) {
+fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit) {
     var color: Color
     if (calculatedSum < 0){
         color = Color.Red
@@ -46,7 +46,7 @@ fun TopBar(groupName: String, calculatedSum: Double) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(onClick = { println("We go back type shi")}) {
+                Button(onClick = onBack) {
                     Text("Back")
                 }
                 Button(
@@ -150,14 +150,15 @@ fun InputBar(addExpense: () -> Unit) {
 }
 
 @Composable
-fun ChatScreen(group: Group, addExpense: () -> Unit) {
+fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}) {
     group.expenses.toMutableList()
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
             groupName = group.name,
             //Change to API-call 😁
-            calculatedSum = 0.00
+            calculatedSum = 0.00,
+            onBack = onBack
         )
 
         MessagesList(
