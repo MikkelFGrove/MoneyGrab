@@ -45,8 +45,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavManager() {
-    val group = testData()
-
+    val group = TestData()
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "signup") {
@@ -70,9 +69,20 @@ fun NavManager() {
 
         composable("groupPage") {
             GroupPage(
-                groups = emptyList<FrontendGroup>(),
+                groups = listOf(
+                    FrontendGroup(1, "Årsfest")
+                ),
                 onProfileClicked = { navController.navigate("ProfilePage") },
-                onCreateGroupClicked = { navController.navigate("groupCreation")}
+                onCreateGroupClicked = { navController.navigate("groupCreation") },
+                onGroupClicked = { navController.navigate("groupChat") }
+            )
+        }
+
+        composable("groupChat") {
+            ChatScreen(
+                group = TestData().copy(name = "Chat"),
+                addExpense = { navController.navigate("addToExpense") },
+                onBack = { navController.navigateUp() }
             )
         }
 
@@ -90,15 +100,19 @@ fun NavManager() {
             )
         }
 
+        composable("addToExpense") {
+            AddPayersView(
+                group = group,
+                onAddExpense = { navController.popBackStack() }
+            )
+        }
+
+
         composable("groupCreation") {
             GroupCreationView()
         }
 
-        composable ("addToExpense") {
-            AddPayersView(
-                group = group
-            )
-        }
+
 
     }
 }
