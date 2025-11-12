@@ -17,7 +17,7 @@ import com.example.moneygrab.screens.LoginScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddPayersView
-import com.example.moneygrab.views.TestData
+import com.example.moneygrab.views.testData
 import com.example.moneygrab.views.GroupCreationView
 
 class MainActivity : ComponentActivity() {
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavManager() {
-    val group = TestData()
+    val group = testData()
 
     val navController = rememberNavController()
 

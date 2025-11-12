@@ -49,7 +49,7 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
 
     val isDropDownExpanded = remember { mutableStateOf(false) }
     val users = group.users.toList()
-    val selectedUsers = remember { mutableStateListOf<User>() }
+    val selectedUsers = remember { mutableStateListOf<User>().apply {addAll(group.users)}}
     val expense = group.expenses[group.expenses.size-1]
 
     Column(
