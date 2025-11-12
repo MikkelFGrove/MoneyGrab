@@ -43,7 +43,6 @@ fun ProfilePage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
             .padding(16.dp)
     ) {
         // Top bar for arrow and edit

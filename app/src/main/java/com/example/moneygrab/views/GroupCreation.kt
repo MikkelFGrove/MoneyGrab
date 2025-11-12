@@ -107,7 +107,7 @@ class GroupViewModel() : ViewModel() {
 }
 
 @Composable
-fun GroupCreationView(modifier: Modifier = Modifier, groupViewModel: GroupViewModel = viewModel()) {
+fun GroupCreationView(onCreateDone: () -> Unit, modifier: Modifier = Modifier, groupViewModel: GroupViewModel = viewModel()) {
     Column (
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -126,19 +126,22 @@ fun GroupCreationView(modifier: Modifier = Modifier, groupViewModel: GroupViewMo
 
         AccountSearchBar(groupViewModel)
 
-        CreateButton(groupViewModel)
+        CreateButton(groupViewModel, onClick = onCreateDone)
     }
 }
 
 @Composable
-fun CreateButton(groupViewModel: GroupViewModel) {
-    Card (
+fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
+    Card(
         modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
             .background(Color.Transparent),
     ) {
         Button(
-            onClick = { println(groupViewModel.groupName.value) },
+            onClick = {
+                println(groupViewModel.groupName.value)
+                onClick()
+            },
             shape = MaterialTheme.shapes.small,
         ) {
             Text(
@@ -149,6 +152,7 @@ fun CreateButton(groupViewModel: GroupViewModel) {
         }
     }
 }
+
 
 @Composable
 fun ImageButton(groupViewModel: GroupViewModel) {

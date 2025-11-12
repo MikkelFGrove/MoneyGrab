@@ -101,11 +101,10 @@ fun NavManager() {
 
 
         composable("groupCreation") {
-            GroupCreationView()
+            GroupCreationView(
+                onCreateDone = {navController.popBackStack()}
+            )
         }
-
-
-
     }
 }
 
