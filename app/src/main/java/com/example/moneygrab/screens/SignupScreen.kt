@@ -99,6 +99,8 @@ fun SignUpScreen(
 @Composable
 fun SignUpScreenPreview() {
     MoneyGrabTheme {
-        SignUpScreen { _, _, _, _ -> }
+        SignUpScreen(
+            onSignUpClicked = { _, _, _, _ -> }
+        )
     }
 }
