@@ -11,14 +11,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.chat.ChatScreen
 import com.example.debtcalculator.data.Group
-import com.example.moneygrab.screens.HomeScreen
-import com.example.moneygrab.screens.LoginScreen
-import com.example.moneygrab.screens.SignUpScreen
+import com.example.moneygrab.views.HomeScreen
+import com.example.moneygrab.views.LoginScreen
+import com.example.moneygrab.views.SignUpScreen
 import com.example.moneygrab.views.FrontendGroup
 import com.example.moneygrab.views.LoginScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddPayersView
+import com.example.moneygrab.views.CredentialMethod
 import com.example.moneygrab.views.testData
 import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupPage
@@ -80,7 +81,7 @@ fun NavManager() {
 
         composable("groupChat") {
             ChatScreen(
-                group = TestData().copy(name = "Chat"),
+                group = testData().copy(name = "Chat"),
                 addExpense = { navController.navigate("addToExpense") },
                 onBack = { navController.navigateUp() }
             )
