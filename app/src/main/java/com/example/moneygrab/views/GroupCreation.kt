@@ -104,6 +104,7 @@ class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient
 
 @Composable
 fun GroupCreationView(onCreateGroupNavigation: () -> Unit, modifier: Modifier = Modifier) {
+    val groupViewModel: GroupViewModel = viewModel()
     Column (
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -133,9 +134,9 @@ fun CreateButton(groupViewModel: GroupViewModel, navigate: () -> Unit) {
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
             .background(Color.Transparent),
     ) {
-                groupViewModel.createGroup()
-            onClick = {
         Button (
+            onClick = {
+                groupViewModel.createGroup()
                 navigate()
             },
             shape = MaterialTheme.shapes.small,
@@ -148,7 +149,6 @@ fun CreateButton(groupViewModel: GroupViewModel, navigate: () -> Unit) {
         }
     }
 }
-
 
 @Composable
 fun ImageButton(groupViewModel: GroupViewModel) {
@@ -262,7 +262,7 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
                 Icon (
                     imageVector = Icons.Filled.Close,
                     contentDescription = "Remove Person",
-                    )
+                )
             }
         }
     }
