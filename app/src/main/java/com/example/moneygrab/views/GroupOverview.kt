@@ -44,7 +44,7 @@ data class FrontendGroup(val id: Int, val name: String)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GroupPage(onProfileClicked: () -> Unit, groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun GroupPage(onGroupClicked: (FrontendGroup) -> Unit, onProfileClicked: () -> Unit, groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize()) {
 
         LazyColumn(
@@ -105,7 +105,9 @@ fun GroupPage(onProfileClicked: () -> Unit, groups: List<FrontendGroup>, onCreat
             items(groups, key = { it.id }) { group ->
                 GroupCard(
                     name = group.name,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = { onGroupClicked(group) }
                 )
             }
         }
@@ -131,12 +133,13 @@ fun GroupPage(onProfileClicked: () -> Unit, groups: List<FrontendGroup>, onCreat
 
 
 @Composable
-fun GroupCard(name: String, modifier: Modifier = Modifier){
+fun GroupCard(name: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}){
     Card(
         modifier = Modifier
             .fillMaxWidth(fraction = 0.9f)
             .height(100.dp)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1E88E5)
@@ -167,7 +170,8 @@ fun GroupPreview() {
                 FrontendGroup(2, "Sommerhus"),
                 FrontendGroup(3, "Bytur")
             ),
-            onCreateGroupClicked = {}
+            onCreateGroupClicked = {},
+            onGroupClicked = {}
         )
     }
 }

@@ -76,7 +76,7 @@ fun TestData(): Group {
 
 
 @Composable
-fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
+fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () -> Unit = {}) {
 
     val isDropDownExpanded = remember { mutableStateOf(false) }
     val users = group.users.toList()
@@ -167,6 +167,7 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group) {
                             this[this.lastIndex] = updatedExpense
                         })
                         println(updatedGroup)
+                        onAddExpense()
                       },
             modifier = Modifier.padding(horizontal = 14.dp).height(64.dp),
             shape = RoundedCornerShape(12.dp),
