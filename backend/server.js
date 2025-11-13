@@ -174,7 +174,7 @@ app.get('/groups/:id', (req, res) => {
 app.post('/groups', (req, res) => {
     const { name, image} = req.body;
 
-    db.run('INSERT INTO groups VALUES (?, ?)',
+    db.run('INSERT INTO groups (name, image) VALUES (?, ?)',
         [name, image],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
@@ -245,7 +245,7 @@ app.get('/users/:id', (req, res) => {
             res.json(row);
         });
 });
-
+// Get expenses on a user
 app.get('/users/:id/expenses', (req, res) => {
     const { id } = req.params;
     db.all(`SELECT expense.id, expense.owner, expense."group", expense.description, expense.amount, expense.timeStamp
@@ -258,6 +258,34 @@ app.get('/users/:id/expenses', (req, res) => {
             if(!rows) return res.status(404).json({err: 'No expenses found for this user' });
             res.json(rows);
         });
+});
+
+// Get groups on a user
+app.get('/users/:id/groups', (req, res) => {
+    const { id } = req.params;
+    db.all('SELECT groups.id, groups.name, groups.image FROM groups groups INNER JOIN usersInGroup uIG on groups.id = uIG."group" WHERE uIG.user = ?',
+    [id],
+    (err, rows) => {
+        if(err) return res.status(500).json({err: err.message});
+        if(!rows) return res.status(404).json({err: 'No groups found for this user'});
+        res.json(rows);
+    });
+});
+
+//Get expenses on a group
+app.get('/groups/:id/expenses', (req, res) => {
+  const { id } = req.params;
+  db.all(
+    `SELECT e.id, e.owner, e."group", e.description, e.amount, e.timeStamp
+     FROM expenses e
+     WHERE e."group" = ?`,
+    [id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ err: err.message });
+      if (!rows) return res.status(404).json({ err: 'No expenses found for this group' });
+      res.json(rows);
+    }
+  );
 });
 
 app.listen(3000, () => console.log('The server is running on http://localhost:3000'));
