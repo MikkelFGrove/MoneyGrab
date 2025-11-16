@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -15,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.moneygrab.R
 import com.example.moneygrab.components.SlideToUnlock
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
@@ -27,7 +31,8 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 fun ConfirmPaymentPage(
     modifier: Modifier = Modifier,
     groupName: String,
-    debt: Int
+    debt: Int,
+    onBack: () -> Unit
 ) {
     //State hoisting for the slider
     var isLoading by remember { mutableStateOf(false) }
@@ -51,63 +56,76 @@ fun ConfirmPaymentPage(
                 .padding(horizontal = 24.dp)
         )
         {
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = "You owe",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = headlineColor
-                ),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .scale(2f)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 28.dp, vertical = 16.dp)
-            ) {
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_back),
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
                 Text(
-                    text = groupName,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "You owe",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = headlineColor
+                    ),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .scale(2f)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 28.dp, vertical = 16.dp)
+                ) {
+                    Text(
+                        text = groupName,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
+                }
+                Text(
+                    text = "${debt} kr",
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = accent,
+                        letterSpacing = 0.sp
+                    ),
+                    textAlign = TextAlign.Center
                 )
+                Spacer(Modifier.weight(1f))
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    SlideToUnlock(
+                        isLoading = isLoading,
+                        onUnlockRequested = { isLoading = true }
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
             }
-            Text(
-                text = "${debt} kr",
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = accent,
-                    letterSpacing = 0.sp
-                ),
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.weight(1f))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                SlideToUnlock(
-                    isLoading = isLoading,
-                    onUnlockRequested = { isLoading = true }
-                )
-            }
-            Spacer(Modifier.height(16.dp))
         }
-    }
 }
+
 
 @Preview(showBackground = true)
 @Composable
 fun PayPreview() {
     MoneyGrabTheme {
-        ConfirmPaymentPage(groupName = "Årsfest", debt = 300)
+        ConfirmPaymentPage(groupName = "Årsfest", debt = 300, onBack = {println("bubu")})
     }
 }
