@@ -15,6 +15,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.moneygrab.R
@@ -150,7 +151,8 @@ fun InputBar(addExpense: () -> Unit) {
 }
 
 @Composable
-fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, onPayDebt: () -> Unit) {
+fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, onConfirmation: () -> Unit) {
+    var showCloseDialog by remember { mutableStateOf(false) }
     group.expenses.toMutableList()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -159,7 +161,9 @@ fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, on
             //Change to API-call 😁
             calculatedSum = 0.00,
             onBack = onBack,
-            onPayDebt
+            onPayDebt = {
+                showCloseDialog = true
+            }
         )
 
         MessagesList(
@@ -170,6 +174,62 @@ fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, on
         )
 
         InputBar(addExpense)
+
+        if (showCloseDialog) {
+            DialogCloseTheTab(
+                onDismissRequest = { showCloseDialog = false },
+                onConfirmation = onConfirmation
+            )
+        }
+    }
+}
+
+@Composable
+fun DialogCloseTheTab(
+    onDismissRequest: () -> Unit,
+    onConfirmation: () -> Unit,
+) {
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        // Draw a rectangle shape with rounded corners inside the dialog
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(375.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Do you wish to close the tab? " +
+                            "No more expenses can be added before all members" +
+                            "have paid their debts.",
+                    modifier = Modifier.padding(16.dp),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    TextButton(
+                        onClick = { onDismissRequest() },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Dismiss")
+                    }
+                    TextButton(
+                        onClick = { onConfirmation() },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Confirm")
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -178,7 +238,7 @@ fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, on
 fun ChatScreenPreview() {
     val group = TestData()
     MaterialTheme {
-        ChatScreen(group = group, addExpense = {println("Norway")}, onPayDebt = {println("bulu")}
+        ChatScreen(group = group, addExpense = {println("Norway")}, onConfirmation = {println("meep")}
         )
     }
 }

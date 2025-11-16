@@ -74,7 +74,7 @@ fun NavManager() {
                 group = testData().copy(name = "Chat"),
                 addExpense = { navController.navigate("addToExpense") },
                 onBack = { navController.navigateUp() },
-                onPayDebt = {navController.navigate("confirmPayment")}
+                onConfirmation = {navController.navigate("confirmPayment")}
             )
         }
 
