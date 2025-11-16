@@ -1,33 +1,28 @@
 // ChatScreen.kt
-package com.example.chat
+package com.example.moneygrab.views
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.moneygrab.R
-import com.example.moneygrab.views.TestData
 
 data class MoneyRequest(val text: String, val isMine: Boolean)
 
 @Composable
-fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit) {
+fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDebt: () -> Unit) {
     var color: Color
     if (calculatedSum < 0){
         color = Color.Red
@@ -55,7 +50,7 @@ fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit) {
                     )
                 }
                 Button(
-                    onClick = { println("Go to pay!")},
+                    onClick = onPayDebt,
                     contentPadding = PaddingValues(
                         start = 4.dp,
                         top = 1.dp,
@@ -155,7 +150,7 @@ fun InputBar(addExpense: () -> Unit) {
 }
 
 @Composable
-fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}) {
+fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, onPayDebt: () -> Unit) {
     group.expenses.toMutableList()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -163,7 +158,8 @@ fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}) {
             groupName = group.name,
             //Change to API-call 😁
             calculatedSum = 0.00,
-            onBack = onBack
+            onBack = onBack,
+            onPayDebt
         )
 
         MessagesList(
@@ -182,7 +178,7 @@ fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}) {
 fun ChatScreenPreview() {
     val group = TestData()
     MaterialTheme {
-        ChatScreen(group = group, addExpense = {println("Norway")}
+        ChatScreen(group = group, addExpense = {println("Norway")}, onPayDebt = {println("bulu")}
         )
     }
 }
