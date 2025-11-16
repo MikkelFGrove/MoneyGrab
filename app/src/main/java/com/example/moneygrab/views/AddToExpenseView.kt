@@ -24,8 +24,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -33,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +44,7 @@ import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.Message
 import com.example.debtcalculator.data.User
+import com.example.moneygrab.R
 import kotlin.time.TimeSource
 
 
@@ -76,12 +80,32 @@ fun TestData(): Group {
 
 
 @Composable
-fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () -> Unit = {}) {
+fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () -> Unit = {}, onBack: () -> Unit = {}) {
 
     val isDropDownExpanded = remember { mutableStateOf(false) }
     val users = group.users.toList()
     val selectedUsers = remember { mutableStateListOf<User>().apply {addAll(group.users)}}
     val expense = group.expenses[group.expenses.size-1]
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_back),
+                    contentDescription = "Back"
+                )
+            }
+        }
+    }
 
     Column(
         modifier = modifier

@@ -21,25 +21,16 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
 data class CredentialMethod(
     val fullName: String,
-    val email: String,
     val phoneNumber: String
 )
 
-data class PaymentMethod(
-    val brand: String,
-    val last4: String,
-    val expMonth: Int,
-    val expYear: Int
-)
 
 @Composable
 fun ProfilePage(
     credentialMethod: CredentialMethod,
-    paymentMethods: List<PaymentMethod>,
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {},
-    onManageCardsClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -89,7 +80,7 @@ fun ProfilePage(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Takes parameters fullName, email, phoneNumber
+        // Takes parameters fullName, phoneNumber
         Text(
             text = credentialMethod.fullName,
             fontSize = 24.sp,
@@ -97,67 +88,11 @@ fun ProfilePage(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Text(
-            text = credentialMethod.email,
-            fontSize = 20.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            color = Color.Gray
-        )
-        Text(
             text = credentialMethod.phoneNumber,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
         )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Manage credit card
-        // Would need logic for managing cards
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Payment methods",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Black
-            )
-
-            TextButton(
-                onClick = onManageCardsClick,
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color(0xFF1E88E5)
-                )
-            ) {
-                Text(
-                    text = "Manage",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-
-
-
-        if (paymentMethods.isEmpty()) {
-            Text(
-                text = "No payment methods added yet.",
-                color = Color.Black,
-                fontSize = 18.sp,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .align (Alignment.CenterHorizontally)
-            )
-        } else {
-            paymentMethods.forEach { method ->
-                PaymentCard(method)
-            }
-        }
-
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -180,40 +115,3 @@ fun ProfilePage(
     }
 
 }
-
-@Composable
-private fun PaymentCard(method: PaymentMethod) {
-    val masked = "•••• ${method.last4.takeLast(4)}"
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E88E5)), // background color
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = masked,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = method.brand,
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 14.sp
-            )
-            Text(
-                text = "Expires %02d/%02d".format(method.expMonth, method.expYear % 100),
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-
-
-

@@ -81,11 +81,9 @@ fun NavManager() {
         composable("ProfilePage") {
             ProfilePage(
                 credentialMethod = CredentialMethod(
-                    fullName = "43",
-                    email = "43",
-                    phoneNumber = "43"
+                    fullName = "Magnus Hende jdj",
+                    phoneNumber = "43434343"
                 ),
-                paymentMethods = emptyList(),
                 onBackClick = { navController.popBackStack() },
                 onLogoutClick = { navController.navigate("login") }
                 //onEditClick = { },
@@ -95,14 +93,19 @@ fun NavManager() {
         composable("addToExpense") {
             AddPayersView(
                 group = group,
-                onAddExpense = { navController.popBackStack() }
+                onAddExpense = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
             )
         }
 
 
         composable("groupCreation") {
-            GroupCreationView({ navController.navigate("groupPage") })
+            GroupCreationView(
+                onCreateGroupNavigation = { navController.navigate("groupPage") },
+                onBack = { navController.popBackStack() }
+            )
         }
+
     }
 }
 
