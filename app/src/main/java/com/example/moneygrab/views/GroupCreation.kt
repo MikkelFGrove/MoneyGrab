@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.PopupProperties
@@ -60,8 +61,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
+import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 
 data class User (
@@ -69,16 +72,14 @@ data class User (
     val phoneNumber: Number
 )
 
-data class GroupData (
-    val name: String,
-    val users: List<User>
-)
+class GroupViewModel() : ViewModel() {
+    private val api: APIEndpoints = RetrofitClient.getAPI()
 
-class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient()) : ViewModel() {
     var chosenUsers = mutableStateListOf<User>()
     var searchResult = mutableStateListOf<User>()
     var groupName = mutableStateOf("")
     var image = mutableStateOf<Bitmap?>(null)
+    var errorCreatingGroup = mutableStateOf(false)
 
     fun storeImage(img: Bitmap?) {
         image.value = img
@@ -86,24 +87,26 @@ class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient
 
     fun getSuggestedUsers(searchString: String) {
         viewModelScope.launch {
-            try {
-                val response = retrofitClient.api.getSuggestedUsers(searchString)
-                searchResult.clear()
-                searchResult.addAll(response)
-            } catch (e: Exception) {
-                println(e.message)
+            val response = api.getSuggestedUsers(searchString)
+            if (response.code() == 200) {
+                response.body()?.let {
+                    searchResult.clear()
+                    searchResult.addAll(it)
+                }
             }
         }
     }
 
-    fun createGroup() {
-        viewModelScope.launch {
-            try {
-                retrofitClient.api.createGroup(GroupData(groupName.value, chosenUsers))
-            } catch (e: Exception) {
-                println(e.message)
+    fun createGroup(navigation: () -> Unit) {
+        errorCreatingGroup.value = true
+        /*viewModelScope.launch {
+            val response = api.createGroup(APIEndpoints.GroupData(groupName.value, chosenUsers))
+            if (response.code() != 200) {
+                errorCreatingGroup.value = true
+            } else {
+                navigation()
             }
-        }
+        }*/
     }
 }
 
@@ -111,9 +114,11 @@ class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient
 fun GroupCreationView(
     onBack: () -> Unit,
     onCreateGroupNavigation: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    groupViewModel: GroupViewModel = viewModel()
 ) {
-    val groupViewModel: GroupViewModel = viewModel()
+    val errorCreatingGroup by groupViewModel.errorCreatingGroup
+    var groupName by groupViewModel.groupName
 
     Column(
         modifier = modifier
@@ -143,7 +148,6 @@ fun GroupCreationView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var groupName by groupViewModel.groupName
         OutlinedTextField(
             value = groupName,
             label = { Text("Name") },
@@ -157,6 +161,12 @@ fun GroupCreationView(
         AccountSearchBar(groupViewModel)
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (errorCreatingGroup) {
+            ErrorCard("An error has occurred")
+
+            Spacer(modifier = Modifier.height(6.dp))
+        }
 
         CreateButton(groupViewModel, onCreateGroupNavigation)
     }
@@ -172,8 +182,7 @@ fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
     ) {
         Button (
             onClick = {
-                groupViewModel.createGroup()
-                onClick()
+                groupViewModel.createGroup(navigate)
             },
             shape = MaterialTheme.shapes.small,
         ) {
@@ -289,7 +298,7 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
                 onClick = { onClick(user) },
                 colors = IconButtonColors(
                     Color.Transparent,
-                    Color.Red,
+                    MaterialTheme.colorScheme.error,
                     Color.Transparent,
                     Color.Transparent
                 ),
@@ -368,5 +377,13 @@ fun AccountSearchBar(groupViewModel: GroupViewModel) {
             users = chosenUsers,
             onClick = { user -> chosenUsers.remove(user) }
         )
+    }
+}
+
+@Preview
+@Composable
+fun GroupCreationPreview() {
+    MoneyGrabTheme {
+        GroupCreationView({}, {})
     }
 }

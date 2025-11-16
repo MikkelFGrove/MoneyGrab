@@ -11,40 +11,55 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.moneygrab.APIEndpoints
-import com.example.moneygrab.CurrentUser
-import com.example.debtcalculator.data.User
-import com.example.moneygrab.LoginRequest
-
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 
+// TODO - Pass on user information to a User Context, this context could be injected into the ViewModel
+class LoginViewModel() : ViewModel() {
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    var phone = mutableStateOf("")
+    var password = mutableStateOf("")
+    var wrongCredentials = mutableStateOf(false)
+
+    fun login(navigation: () -> Unit) {
+        viewModelScope.launch {
+            val res = api.login(APIEndpoints.LoginData(phone.value, password.value))
+            if (res.code() != 200) {
+                wrongCredentials.value = true
+            } else {
+                // Set user in context
+                navigation()
+            }
+        }
+    }
+}
+
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit, onSignupClicked: () -> Unit) {
-    var phone by remember { mutableStateOf("") }
-    var password by remember {mutableStateOf("")}
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
-    val currentUser = remember { CurrentUser(context) }
-    val scope = rememberCoroutineScope()
+fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSignupClicked: () -> Unit, loginViewModel: LoginViewModel = LoginViewModel()) {
+    var phone by loginViewModel.phone
+    var password by loginViewModel.password
+    var wrongCredentials by loginViewModel.wrongCredentials
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -79,23 +94,14 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit, onSig
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        if (wrongCredentials) {
+            ErrorCard("Phone number or password is incorrect")
+
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+
         Button(
-            onClick = {
-                scope.launch {
-                    val user = try {
-                        loginUser(phone, password)
-                    } catch (e: Exception) {
-                        null
-                    }
-                    println(user?.phoneNumber)
-                    if (user != null) {
-                        currentUser.saveUser(user)
-                        onLoginSuccess()
-                    } else {
-                        errorMessage = "Buhu"
-                    }
-                }
-            },
+            onClick = { loginViewModel.login(onLoginClicked) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),

@@ -35,10 +35,7 @@ import com.example.moneygrab.views.TestData
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var apiInterface: APIEndpoints
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
