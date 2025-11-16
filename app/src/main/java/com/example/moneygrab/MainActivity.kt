@@ -24,10 +24,7 @@ import com.example.moneygrab.views.ProfilePage
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var apiInterface: APIEndpoints
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -53,9 +50,7 @@ fun NavManager() {
         }
 
         composable("signUp") {
-            SignUpScreen { name, email, phone, password ->
-                navController.navigate("groupPage")
-            }
+            SignUpScreen { navController.navigate("groupPage") }
         }
 
         composable("groupPage") {
