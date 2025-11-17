@@ -66,6 +66,7 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 data class User (
     val name: String,
@@ -80,6 +81,7 @@ class GroupViewModel() : ViewModel() {
     var groupName = mutableStateOf("")
     var image = mutableStateOf<Bitmap?>(null)
     var errorCreatingGroup = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
 
     fun storeImage(img: Bitmap?) {
         image.value = img
@@ -87,8 +89,13 @@ class GroupViewModel() : ViewModel() {
 
     fun getSuggestedUsers(searchString: String) {
         viewModelScope.launch {
-            val response = api.getSuggestedUsers(searchString)
-            if (response.code() == 200) {
+            val response = try {
+                api.getSuggestedUsers(searchString)
+            } catch (e: Exception) {
+                null
+            }
+
+            if (response?.code() == 200) {
                 response.body()?.let {
                     searchResult.clear()
                     searchResult.addAll(it)
@@ -98,15 +105,22 @@ class GroupViewModel() : ViewModel() {
     }
 
     fun createGroup(navigation: () -> Unit) {
-        errorCreatingGroup.value = true
-        /*viewModelScope.launch {
-            val response = api.createGroup(APIEndpoints.GroupData(groupName.value, chosenUsers))
-            if (response.code() != 200) {
+        viewModelScope.launch {
+            val response = try {
+                api.createGroup(APIEndpoints.GroupData(groupName.value, chosenUsers))
+            } catch (e: Exception) {
+                errorMessage.value = "A network error has occurred"
+                errorCreatingGroup.value = true
+                null
+            }
+
+            if (response?.code() != 200) {
+                errorMessage.value = "An error has occurred on the server"
                 errorCreatingGroup.value = true
             } else {
                 navigation()
             }
-        }*/
+        }
     }
 }
 
@@ -117,8 +131,9 @@ fun GroupCreationView(
     modifier: Modifier = Modifier,
     groupViewModel: GroupViewModel = viewModel()
 ) {
-    val errorCreatingGroup by groupViewModel.errorCreatingGroup
+    var errorCreatingGroup by groupViewModel.errorCreatingGroup
     var groupName by groupViewModel.groupName
+    var errorMessage by groupViewModel.errorMessage
 
     Column(
         modifier = modifier
@@ -163,7 +178,7 @@ fun GroupCreationView(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (errorCreatingGroup) {
-            ErrorCard("An error has occurred")
+            ErrorCard(errorMessage)
 
             Spacer(modifier = Modifier.height(6.dp))
         }

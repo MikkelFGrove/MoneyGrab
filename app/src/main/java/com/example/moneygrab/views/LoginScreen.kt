@@ -41,11 +41,20 @@ class LoginViewModel() : ViewModel() {
     var phone = mutableStateOf("")
     var password = mutableStateOf("")
     var wrongCredentials = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
 
     fun login(navigation: () -> Unit) {
         viewModelScope.launch {
-            val res = api.login(APIEndpoints.LoginData(phone.value, password.value))
-            if (res.code() != 200) {
+            val response = try {
+                api.login(APIEndpoints.LoginData(phone.value, password.value))
+            } catch (e: Exception) {
+                errorMessage.value = "An error has occurred"
+                wrongCredentials.value = true
+                null
+            }
+
+            if (response?.code() != 200) {
+                errorMessage.value = "The phone number or password is incorrect"
                 wrongCredentials.value = true
             } else {
                 // Set user in context
@@ -60,6 +69,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
     var phone by loginViewModel.phone
     var password by loginViewModel.password
     var wrongCredentials by loginViewModel.wrongCredentials
+    var errorMessage by loginViewModel.errorMessage
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -95,7 +105,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
         Spacer(modifier = Modifier.height(20.dp))
 
         if (wrongCredentials) {
-            ErrorCard("Phone number or password is incorrect")
+            ErrorCard(errorMessage)
 
             Spacer(modifier = Modifier.height(20.dp))
         }
