@@ -186,7 +186,7 @@ fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
         if (showCloseDialog) {
             DialogCloseTheTab(
                 onDismissRequest = { showCloseDialog = false },
-                onConfirmation =  {onConfirmation},
+                onConfirmation = { onConfirmation(group) },
                 group = group
             )
         }

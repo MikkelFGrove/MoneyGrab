@@ -99,7 +99,7 @@ fun NavManager() {
                         addExpense = { Group -> navController.navigate("addExpense/${Group.id}") },
                         onBack = { navController.navigateUp() },
                         onConfirmation = { Group ->
-                            navController.navigate("confirmPayment${Group.id}")
+                            navController.navigate("confirmPayment/${Group.id}")
                             println("Configrm")
                         }
                     )
