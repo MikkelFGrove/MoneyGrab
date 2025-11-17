@@ -85,7 +85,7 @@ fun ProfilePage(
 
         // Takes parameters fullName, phoneNumber
         Text(
-            text = credentialMethod.fullName,
+            text = fullName,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -108,7 +108,7 @@ fun ProfilePage(
                 .height(48.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFE53935), // Maybe add the purple button back?
-                contentColor = Color.White 
+                contentColor = Color.White
             )
         ) {
             Text(

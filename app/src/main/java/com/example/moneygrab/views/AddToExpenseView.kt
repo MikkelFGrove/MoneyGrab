@@ -48,7 +48,6 @@ import com.example.debtcalculator.data.Message
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.R
 import com.example.moneygrab.CurrentUser
-import com.example.moneygrab.R
 import kotlin.time.TimeSource
 
 /*

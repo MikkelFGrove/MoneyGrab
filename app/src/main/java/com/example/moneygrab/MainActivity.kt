@@ -15,32 +15,23 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.chat.ChatScreen
 import androidx.navigation.navArgument
 import com.example.debtcalculator.data.Group
 import com.example.moneygrab.views.ChatScreen
 import com.example.moneygrab.views.LoginScreen
 import com.example.moneygrab.views.SignUpScreen
-import com.example.moneygrab.views.FrontendGroup
-import com.example.moneygrab.views.SignUpScreen
-import com.example.moneygrab.views.FrontendGroup
-import com.example.moneygrab.views.LoginScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddExpenseView
 import com.example.moneygrab.views.AddPayersView
 import com.example.moneygrab.views.ConfirmPaymentPage
-import com.example.moneygrab.views.CredentialMethod
-import com.example.moneygrab.views.testData
-import com.example.moneygrab.views.ConfirmPaymentPage
-import com.example.moneygrab.views.testData
+
 import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupPage
 import com.example.moneygrab.views.ProfilePage
-import com.example.moneygrab.views.ProfilePage
-import com.example.moneygrab.views.SignUpScreen
+
 import com.example.moneygrab.views.TestData
-import java.sql.SQLOutput
+
 
 
 class MainActivity : ComponentActivity() {

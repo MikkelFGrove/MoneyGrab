@@ -24,7 +24,7 @@ import com.example.debtcalculator.data.User
 import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import kotlin.system.exitProcess
-import com.example.moneygrab.R
+
 import com.example.moneygrab.views.TestData
 
 data class MoneyRequest(val text: String, val isMine: Boolean)
