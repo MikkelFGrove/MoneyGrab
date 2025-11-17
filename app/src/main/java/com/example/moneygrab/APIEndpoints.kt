@@ -1,5 +1,6 @@
 package com.example.moneygrab
 
+import com.example.debtcalculator.data.Group
 import com.example.moneygrab.views.User
 import retrofit2.Response
 import retrofit2.http.Body
@@ -16,6 +17,15 @@ interface APIEndpoints {
 
     @POST("login")
     suspend fun login(@Body body: LoginData): Response<com.example.debtcalculator.data.User>
+
+    @GET("groups/{id}")
+    suspend fun getGroup(@Path("id") id: Int): Response<Group>
+
+    @POST("groups/{id}/closetab")
+    suspend fun closeTab(@Path("id") id: Int): Response<Int>
+
+    @GET("groups/{groupId}/owed/{userPhone}")
+    suspend fun getAmountOwed(@Path("groupId") groupId: Int, @Path("userId") userPhone: String): Response<Float>
 
     data class LoginData (
         val phoneNumber: String,

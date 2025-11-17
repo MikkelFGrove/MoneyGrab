@@ -32,11 +32,20 @@ class SignupViewModel() : ViewModel() {
     var phone = mutableStateOf("")
     var password = mutableStateOf("")
     var errorHasOccurred = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
 
     fun signup(navigation: () -> Unit) {
         viewModelScope.launch {
-            val res = api.login(APIEndpoints.LoginData(phone.value, password.value))
-            if (res.code() != 200) {
+            val response = try {
+                api.login(APIEndpoints.LoginData(phone.value, password.value))
+            } catch (e: Exception) {
+                errorMessage.value = "An error has occurred"
+                errorHasOccurred.value = true
+                null
+            }
+
+            if (response?.code() != 200) {
+                errorMessage.value = "The phone number is already in use"
                 errorHasOccurred.value = true
             } else {
                 // Set user in Context
@@ -56,6 +65,7 @@ fun SignUpScreen(
     var phone by signupViewModel.phone
     var password by signupViewModel.password
     var errorHasOccured by signupViewModel.errorHasOccurred
+    var errorMessage by signupViewModel.errorMessage
 
     Column(
         modifier = modifier
@@ -103,7 +113,7 @@ fun SignUpScreen(
         Spacer(Modifier.height(20.dp))
         
         if (errorHasOccured) {
-            ErrorCard("An error has occurred")
+            ErrorCard(errorMessage)
 
             Spacer(Modifier.height(20.dp))
         }
