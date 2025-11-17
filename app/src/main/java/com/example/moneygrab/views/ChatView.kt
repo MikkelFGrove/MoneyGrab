@@ -28,7 +28,7 @@ import com.example.moneygrab.views.TestData
 data class MoneyRequest(val text: String, val isMine: Boolean)
 
 @Composable
-fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit) {
+fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDebt: () -> Unit) {
     var color: Color
     if (calculatedSum < 0){
         color = Color.Red
@@ -56,7 +56,7 @@ fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit) {
                     )
                 }
                 Button(
-                    onClick = { println("Go to pay!")},
+                    onClick = onPayDebt,
                     contentPadding = PaddingValues(
                         start = 4.dp,
                         top = 1.dp,
