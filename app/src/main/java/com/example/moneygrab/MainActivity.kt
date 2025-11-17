@@ -74,7 +74,8 @@ fun NavManager() {
             ChatScreen(
                 group = testData().copy(name = "Chat"),
                 addExpense = { navController.navigate("addToExpense") },
-                onBack = { navController.navigateUp() }
+                onBack = { navController.navigateUp() },
+                onConfirmation = {navController.navigate("confirmPayment")}
             )
         }
 
