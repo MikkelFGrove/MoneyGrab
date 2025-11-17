@@ -19,9 +19,10 @@ fun main() {
     val group = Group(
         "Group",
         setOf(userJoe, userJohn, userSonny),
-        arrayOf(banankage, riskiks, skraldesække),
-        arrayOf()
-    )
+        mutableListOf(banankage, riskiks, skraldesække),
+        arrayOf(),
+        id = 1
+        )
     val balances = debtCalculatorService.calculateBalances(group)
     println(balances)
 

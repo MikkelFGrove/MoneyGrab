@@ -18,21 +18,37 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
+import com.example.debtcalculator.data.User
+import com.example.moneygrab.CurrentUser
 
 
+private fun fetchGroup(id: Int): Group?{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    return null
+}
 @Composable
-fun AddExpenseView(group: Group, addToExpense: () -> Unit) {
+fun AddExpenseView(groupId: Int, addToExpense: (Group?) -> Unit, back: () -> Unit) {
     var amount by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }.getUser()
 
-        Button(modifier = Modifier.padding(start= 10.dp, top = 10.dp), onClick = addToExpense) {
-            Text("Back")
-        }
+    val group = fetchGroup(groupId)?: fetchGroups(currentUser).first()
+
+    Button(modifier = Modifier.padding(start= 10.dp, top = 10.dp), onClick = back) {
+        Text("Back")
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(64.dp),
@@ -64,17 +80,22 @@ fun AddExpenseView(group: Group, addToExpense: () -> Unit) {
         Button(
             onClick = {
                 var expense = Expense(
-                    amount.toFloat(),
+                    amount = try {
+                        amount.toFloat()
+                    } catch (e: Exception) {
+                        0f
+                    },
                     description = description,
                     //CHANGE THIS WHEN AUTH CONTEXT
-                    lender = group.users.first(),
-                    payers = group.users.toTypedArray()
+                    lender = currentUser?: User(
+                        phoneNumber = "0",
+                        name = "TODO()",
+                        image = null
+                    ),
+                    payers = group?.users?.toTypedArray()?: emptyArray<User>()
                 )
-
-
-
-                println(expense)
-                      },
+                group?.expenses?.add(expense)
+                addToExpense(group) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Add Participants")

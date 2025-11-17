@@ -7,31 +7,34 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
-
-data class CredentialMethod(
-    val fullName: String,
-    val phoneNumber: String
-)
 
 
 @Composable
 fun ProfilePage(
-    credentialMethod: CredentialMethod,
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
+    val fullName = currentUser.getUser()?.name.toString()
+    val phoneNumber = currentUser.getUser()?.phoneNumber.toString()
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -88,7 +91,7 @@ fun ProfilePage(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Text(
-            text = credentialMethod.phoneNumber,
+            text = phoneNumber,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray

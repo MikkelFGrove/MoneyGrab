@@ -1,34 +1,36 @@
 // ChatScreen.kt
-package com.example.chat
+package com.example.moneygrab.views
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
+import com.example.debtcalculator.data.User
+import com.example.moneygrab.CurrentUser
+import com.example.moneygrab.R
+import kotlin.system.exitProcess
 import com.example.moneygrab.R
 import com.example.moneygrab.views.TestData
 
 data class MoneyRequest(val text: String, val isMine: Boolean)
-
 @Composable
 fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDebt: () -> Unit) {
+
     var color: Color
     if (calculatedSum < 0){
         color = Color.Red
@@ -91,24 +93,22 @@ fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDe
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
     //This needs to be implemented again when login authcontext is up and running
-    /* val bubbleColor = if (moneyRequest.isMine) {
+     val bubbleColor = if (moneyRequest.lender.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
         colors.primary
     } else {
         colors.primary.copy(alpha = 0.2f)
     }
 
-    val textColor = if (moneyRequest.isMine) {
+    val textColor = if (moneyRequest.lender.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
         Color.White
     } else {
         Color.Black
-    }*/
-    val bubbleColor = colors.primary
-    val textColor = Color.White
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp, horizontal = 10.dp),
-        horizontalArrangement = Arrangement.Start /*if (moneyRequest.isMine) Arrangement.End else Arrangement.Start*/
+        horizontalArrangement = if (moneyRequest.lender.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) Arrangement.End else Arrangement.Start
     ) {
         Surface(
             color = bubbleColor,
@@ -116,7 +116,7 @@ fun Bubbles(moneyRequest: Expense) {
             tonalElevation = 2.dp
         ) {
             Text(
-                text = moneyRequest.description,
+                text = "${moneyRequest.description} ${ "%.2f".format(moneyRequest.amount) }",
                 color = textColor,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
             )
@@ -138,11 +138,11 @@ fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun InputBar(addExpense: () -> Unit) {
+fun InputBar(addExpense: (Group) -> Unit, group: Group) {
     Surface (modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp)
     {
         Button(
-            onClick = addExpense,
+            onClick = { addExpense(group) },
             modifier = Modifier
                 .padding(start= 50.dp, end = 50.dp, top = 5.dp, bottom = 5.dp),
             shape = RoundedCornerShape(5.dp)
@@ -156,15 +156,18 @@ fun InputBar(addExpense: () -> Unit) {
 }
 
 @Composable
-fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, onConfirmation: () -> Unit) {
+fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit) {
     var showCloseDialog by remember { mutableStateOf(false) }
-    group.expenses.toMutableList()
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }.getUser()
+    val group = fetchGroup(groupID)?: fetchGroups(currentUser).first()
+
+    println("insidechat screen" + groupID)
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
-            groupName = group.name,
-            //Change to API-call 😁
-            calculatedSum = 0.00,
+            groupName = group?.name ?: "null",
+            calculatedSum = getSum(currentUser, group),
             onBack = onBack,
             onPayDebt = {
                 showCloseDialog = true
@@ -172,27 +175,48 @@ fun ChatScreen(group: Group, addExpense: () -> Unit, onBack: () -> Unit = {}, on
         )
 
         MessagesList(
-            messages = group.expenses.toMutableList(),
+            messages = group?.expenses?.toMutableList() ?: emptyList(),
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         )
 
-        InputBar(addExpense)
+        InputBar(addExpense, group)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
                 onDismissRequest = { showCloseDialog = false },
-                onConfirmation = onConfirmation
+                onConfirmation =  {onConfirmation},
+                group = group
             )
         }
     }
 }
 
+private fun getSum(currentUser: User?, group1: Group?): Double{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    return 0.0
+}
+private fun fetchGroup(id: Int): Group?{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    return null
+}
+
 @Composable
 fun DialogCloseTheTab(
     onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
+    onConfirmation: (Group) -> Unit,
+    group: Group
 ) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         // Draw a rectangle shape with rounded corners inside the dialog
@@ -227,7 +251,7 @@ fun DialogCloseTheTab(
                         Text("Dismiss")
                     }
                     TextButton(
-                        onClick = { onConfirmation() },
+                        onClick = { onConfirmation(group) },
                         modifier = Modifier.padding(8.dp),
                     ) {
                         Text("Confirm")
@@ -237,13 +261,19 @@ fun DialogCloseTheTab(
         }
     }
 }
-
+/*
 @Preview(showBackground = true)
 @Composable
 fun ChatScreenPreview() {
     val group = TestData()
     MaterialTheme {
-        ChatScreen(group = group, addExpense = {println("Norway")}, onConfirmation = {println("meep")}
+        ChatScreen(
+            group = 1,
+            addExpense = { println("Norway") },
+            onConfirmation = { println("meep") },
+            groupID = TODO(),
+            onBack = TODO()
         )
     }
 }
+*/

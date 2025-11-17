@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,16 +36,85 @@ import androidx.compose.ui.unit.dp
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.debtcalculator.data.Expense
+import com.example.debtcalculator.data.Group
+import com.example.debtcalculator.data.User
+import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
+import com.example.moneygrab.RetrofitClient
 
 @Immutable
 data class FrontendGroup(val id: Int, val name: String)
 
+fun fetchGroups(user: User?): List<Group>{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    val userA = User(phoneNumber = "11111111", name = "Alice", image = null)
+    val userB = User(phoneNumber = "22222222", name = "Bob", image = null)
+    val userC = User(phoneNumber = "33333333", name = "Charlie", image = null)
+    val userD = User(phoneNumber = "44444444", name = "Diana", image = null)
+
+    val expense1 = Expense(
+        amount = 120f,
+        description = "Dinner",
+        lender = userA,
+        payers = arrayOf(userA, userB)
+    )
+
+    val expense2 = Expense(
+        amount = 90f,
+        description = "Cinema",
+        lender = userC,
+        payers = arrayOf(userC, userD)
+    )
+
+    val expense3 = Expense(
+        amount = 300f,
+        description = "Weekend trip",
+        lender = userB,
+        payers = arrayOf(userA, userB, userC, userD)
+    )
+
+    val group1 = Group(
+        name = "Friends",
+        users = setOf(userA, userB),
+        expenses = mutableListOf(expense1),
+        messages = emptyArray(), // Empty as requested
+        id = 1
+    )
+
+    val group2 = Group(
+        name = "Family",
+        users = setOf(userC, userD),
+        expenses = mutableListOf(expense2),
+        messages = emptyArray(),
+        id = 2
+    )
+
+    val group3 = Group(
+        name = "Work Trip",
+        users = setOf(userA, userB, userC, userD),
+        expenses = mutableListOf(expense3),
+        messages = emptyArray(),
+        id = 3
+    )
+
+    return listOf(group1, group2, group3)
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GroupPage(onGroupClicked: (FrontendGroup) -> Unit, onProfileClicked: () -> Unit, groups: List<FrontendGroup>, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
+    val groups = fetchGroups(currentUser.getUser())
     Box(modifier = modifier.fillMaxSize()) {
 
         LazyColumn(
@@ -107,7 +177,8 @@ fun GroupPage(onGroupClicked: (FrontendGroup) -> Unit, onProfileClicked: () -> U
                     name = group.name,
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = { onGroupClicked(group) }
+                    onClick = { onGroupClicked(group)
+                    println(group.toString())}
                 )
             }
         }
@@ -165,11 +236,6 @@ fun GroupPreview() {
     MoneyGrabTheme {
         GroupPage(
             onProfileClicked = {},
-            groups = listOf(
-                FrontendGroup(1, "Årsfest"),
-                FrontendGroup(2, "Sommerhus"),
-                FrontendGroup(3, "Bytur")
-            ),
             onCreateGroupClicked = {},
             onGroupClicked = {}
         )
