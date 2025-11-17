@@ -3,6 +3,7 @@ package com.example.debtcalculator.data
 data class Group (
     val name: String,
     val users: Set<User>,
-    val expenses: Array<Expense>,
+    var expenses: MutableList<Expense>,
     val messages: Array<Message>,
+    val id: Int
 )

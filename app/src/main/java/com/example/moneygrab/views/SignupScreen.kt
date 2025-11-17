@@ -18,8 +18,10 @@ import androidx.compose.ui.unit.sp
 import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import com.example.moneygrab.APIEndpoints
 import kotlinx.coroutines.launch
 import com.example.debtcalculator.data.User
+import com.example.moneygrab.LoginRequest
 
 @Composable
 fun SignUpScreen(
@@ -117,14 +119,14 @@ fun SignUpScreen(
 
 suspend fun signUpUser(name: String, email: String, phone: String, password: String): User {
     val api = RetrofitClient().api
-    return try {
-        api.signup(
-            mapOf("name" to name, "email" to email, "phone" to phone, "password" to password
-            )
-        )
+
+    /*return try {
+        val signUpRequest = SignUpRequest(phone, password)
+        api.signup(signUpRequest)
     } catch (e: Exception) {
-        User(phoneNumber = phone, name = name, image = null)
-    }
+        User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
+    }*/
+    return User(phoneNumber = phone, name = name, image = null)
 }
 
 /*@Preview(showBackground = true)

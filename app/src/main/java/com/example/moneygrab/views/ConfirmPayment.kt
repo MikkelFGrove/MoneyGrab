@@ -17,23 +17,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.debtcalculator.data.Group
+import com.example.debtcalculator.data.User
+import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.components.SlideToUnlock
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
+private fun getSum(currentUser: User?, group1: Group?): Double{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    return 0.0
+}
+
+private fun fetchGroup(id: Int): Group?{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    return null
+}
 @Composable
 fun ConfirmPaymentPage(
     modifier: Modifier = Modifier,
-    groupName: String,
-    debt: Int,
+    groupId: Int,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }.getUser()
+    val group = fetchGroup(groupId)
+    val groupName = group?.name ?: ""
+    val debt = getSum(currentUser, group)
     //State hoisting for the slider
     var isLoading by remember { mutableStateOf(false) }
 
@@ -126,6 +153,6 @@ fun ConfirmPaymentPage(
 @Composable
 fun PayPreview() {
     MoneyGrabTheme {
-        ConfirmPaymentPage(groupName = "Årsfest", debt = 300, onBack = {println("bubu")})
+        ConfirmPaymentPage(groupId = 1, onBack = {println("bubu")})
     }
 }

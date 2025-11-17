@@ -4,11 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavType
 
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.debtcalculator.data.Group
 import com.example.moneygrab.views.ChatScreen
 import com.example.moneygrab.views.LoginScreen
 import com.example.moneygrab.views.SignUpScreen
@@ -16,14 +24,15 @@ import com.example.moneygrab.views.FrontendGroup
 import com.example.moneygrab.views.LoginScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import com.example.moneygrab.views.AddExpenseView
 import com.example.moneygrab.views.AddPayersView
 import com.example.moneygrab.views.ConfirmPaymentPage
-import com.example.moneygrab.views.CredentialMethod
 import com.example.moneygrab.views.testData
 import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupPage
 import com.example.moneygrab.views.ProfilePage
 import com.example.moneygrab.views.SignUpScreen
+import com.example.moneygrab.views.TestData
 import java.sql.SQLOutput
 
 
@@ -47,79 +56,108 @@ class MainActivity : ComponentActivity() {
 fun NavManager() {
     val group = TestData()
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
 
-    NavHost(navController = navController, startDestination = "signup") {
-        composable("signup") {
-            SignUpScreen(onSignUpSuccess = {navController.navigate("pPage")
-            })
-        }
+    val startDestination = if (currentUser != null) "groupPage" else "login"
 
-        composable("login") {
-            LoginScreen(
-                onLoginClicked = { navController.navigate("groupPage")},
-                onSignupClicked = { navController.navigate("signUp")}
-            )
-        }
+    Scaffold { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+                composable("signup") {
+                    SignUpScreen(onSignUpSuccess = {
+                        navController.navigate("ProfilePage")
+                    })
+                }
 
-        composable("signUp") {
-            SignUpScreen { name, email, phone, password ->
-                navController.navigate("groupPage")
+                composable("login") {
+                    LoginScreen(
+                        onLoginSuccess = { navController.navigate("groupPage") },
+                        onSignupClicked = { navController.navigate("signUp") }
+                    )
+                }
+
+                composable("groupPage") {
+                    GroupPage(
+                        onProfileClicked = { navController.navigate("ProfilePage") },
+                        onCreateGroupClicked = { navController.navigate("groupCreation") },
+                        onGroupClicked = { group ->
+                            navController.navigate("groupChat/${group.id}")
+                        }
+                    )
+                }
+
+                composable(
+                    "groupChat/{groupId}", arguments = listOf(
+                    navArgument("groupId") { type = NavType.IntType }
+                )) { backStackEntry ->
+                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
+
+                    ChatScreen(
+                        groupID = groupId,
+                        addExpense = { Group -> navController.navigate("addExpense/${Group.id}") },
+                        onBack = { navController.navigateUp() },
+                        onConfirmation = { Group ->
+                            navController.navigate("confirmPayment${Group.id}")
+                            println("Configrm")
+                        }
+                    )
+                }
+
+
+                composable(
+                    "addExpense/{groupId}", arguments = listOf(
+                    navArgument("groupId") { type = NavType.IntType }
+                )) { backStackEntry ->
+                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
+                    AddExpenseView(
+                        groupId = groupId,
+                        addToExpense = { Group -> navController.navigate("addToExpense/${Group?.id}") },
+                        back = { navController.popBackStack() }
+                    )
+                }
+
+                composable("ProfilePage") {
+                    ProfilePage(
+                        onBackClick = { navController.popBackStack() },
+                        onLogoutClick = { navController.navigate("login") }
+                        //onEditClick = { },
+                    )
+                }
+
+                composable(
+                    "addToExpense/{groupId}", arguments = listOf(
+                    navArgument("groupId") { type = NavType.IntType }
+                )) { backStackEntry ->
+                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
+                    AddPayersView(
+                        groupId = groupId,
+                        onAddExpense = { Group -> navController.navigate("groupChat/${Group.id}") },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+
+                composable("groupCreation") {
+                    GroupCreationView(
+                        onCreateGroupNavigation = { navController.navigate("groupPage") },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable(
+                    "confirmPayment/{groupId}", arguments = listOf(
+                    navArgument("groupId") { type = NavType.IntType }
+                )) { backStackEntry ->
+                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
+                    ConfirmPaymentPage(
+                        groupId = groupId,
+                        onBack = { navController.popBackStack() })
+                }
+
             }
         }
-
-        composable("groupPage") {
-            GroupPage(
-                groups = listOf(
-                    FrontendGroup(1, "Årsfest")
-                ),
-                onProfileClicked = { navController.navigate("ProfilePage") },
-                onCreateGroupClicked = { navController.navigate("groupCreation") },
-                onGroupClicked = { navController.navigate("groupChat") }
-            )
-        }
-
-        composable("groupChat") {
-            ChatScreen(
-                group = testData().copy(name = "Chat"),
-                addExpense = { navController.navigate("addToExpense") },
-                onBack = { navController.navigateUp() },
-                onConfirmation = {navController.navigate("confirmPayment")}
-            )
-        }
-
-        composable("ProfilePage") {
-            ProfilePage(
-                credentialMethod = CredentialMethod(
-                    fullName = "Magnus Hende jdj",
-                    phoneNumber = "43434343"
-                ),
-                onBackClick = { navController.popBackStack() },
-                onLogoutClick = { navController.navigate("login") }
-                //onEditClick = { },
-            )
-        }
-
-        composable("addToExpense") {
-            AddPayersView(
-                group = group,
-                onAddExpense = { navController.popBackStack() },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-
-        composable("groupCreation") {
-            GroupCreationView(
-                onCreateGroupNavigation = { navController.navigate("groupPage") },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable("confirmPayment"){
-            ConfirmPaymentPage(groupName = group.name, debt = 100,
-                onBack = { navController.popBackStack()})
-        }
-
-    }
 }
 

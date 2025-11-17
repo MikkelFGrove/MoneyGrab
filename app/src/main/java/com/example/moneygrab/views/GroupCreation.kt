@@ -173,7 +173,7 @@ fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
         Button (
             onClick = {
                 groupViewModel.createGroup()
-                navigate()
+                onClick()
             },
             shape = MaterialTheme.shapes.small,
         ) {

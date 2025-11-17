@@ -22,19 +22,19 @@ import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 
-data class CredentialMethod(
-    val fullName: String,
-    val phoneNumber: String
-)
-
 
 @Composable
 fun ProfilePage(
-    credentialMethod: CredentialMethod,
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }
+    val fullName = currentUser.getUser()?.name.toString()
+    val phoneNumber = currentUser.getUser()?.phoneNumber.toString()
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,13 +85,13 @@ fun ProfilePage(
 
         // Takes parameters fullName, phoneNumber
         Text(
-            text = credentialMethod.fullName,
+            text = fullName,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Text(
-            text = credentialMethod.phoneNumber,
+            text = phoneNumber,
             fontSize = 20.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray

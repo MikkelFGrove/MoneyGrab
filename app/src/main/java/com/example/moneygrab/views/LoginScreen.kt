@@ -31,13 +31,14 @@ import androidx.compose.ui.unit.dp
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.CurrentUser
 import com.example.debtcalculator.data.User
+import com.example.moneygrab.LoginRequest
 
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSignupClicked: () -> Unit) {
+fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit, onSignupClicked: () -> Unit) {
     var phone by remember { mutableStateOf("") }
     var password by remember {mutableStateOf("")}
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -126,13 +127,15 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
     }
 }
 
-suspend fun loginUser(phone: String, password: String): User {
+fun loginUser(phone: String, password: String): User {
     val api = RetrofitClient().api
-    return try {
-        api.login(mapOf("phone" to phone, "password" to password))
+    /*return try {
+        //val loginRequest = LoginRequest(phone, password)
+        //api.login(loginRequest)
     } catch (e: Exception) {
         User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
-    }
+    }*/
+    return User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
 }
 
 @Preview(showBackground = true)
@@ -140,8 +143,8 @@ suspend fun loginUser(phone: String, password: String): User {
 fun LoginScreenPreview() {
     MoneyGrabTheme {
         LoginScreen(
-            onLoginClicked = {},
-            onSignupClicked = {}
+            onSignupClicked = {},
+            onLoginSuccess = {}
         )
     }
 }

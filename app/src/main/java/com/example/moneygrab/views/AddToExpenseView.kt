@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,10 +45,11 @@ import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.Message
 import com.example.debtcalculator.data.User
+import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import kotlin.time.TimeSource
 
-
+/*
 @Composable
 fun View() {
     val group = TestData()
@@ -55,7 +57,7 @@ fun View() {
     Scaffold (modifier = Modifier.fillMaxSize()){ innerPadding ->
         AddPayersView(modifier = Modifier.padding(innerPadding), group = group)
     }
-}
+}*/
 
 
 @Composable
@@ -71,21 +73,32 @@ fun TestData(): Group {
     val group = Group(
         name = "Weekend trip",
         users = setOf(user1, user2, user3),
-        expenses = arrayOf(expense),
-        messages = arrayOf(messages)
+        expenses = mutableListOf(expense),
+        messages = arrayOf(messages),
+        id = 1
     )
     return group
 }
 
 
-
+private fun fetchGroup(id: Int): Group?{
+    /*val api = RetrofitClient().api
+    return try {
+        api.fetchGroups(user)
+    } catch (e: Exception){
+        emptyList()
+    }*/
+    return null
+}
 @Composable
-fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () -> Unit = {}, onBack: () -> Unit = {}) {
-
+fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Group) -> Unit = {}, onBack: () -> Unit = {}) {
+    val context = LocalContext.current
+    val currentUser = remember { CurrentUser(context) }.getUser()
+    val group = fetchGroup(groupId)?: fetchGroups(currentUser).first()
     val isDropDownExpanded = remember { mutableStateOf(false) }
-    val users = group.users.toList()
-    val selectedUsers = remember { mutableStateListOf<User>().apply {addAll(group.users)}}
-    val expense = group.expenses[group.expenses.size-1]
+    val users = group?.users?.toList()
+    val selectedUsers = remember { mutableStateListOf<User>().apply {addAll(group?.users ?: mutableStateListOf<User>())}}
+    val expense = group?.expenses[group.expenses.size-1]
 
     Column(
         modifier = modifier
@@ -115,7 +128,7 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () 
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Select people to pay for ${expense.description}",
+            text = "Select people to pay for ${expense?.description}",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp
@@ -155,7 +168,7 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () 
                 onDismissRequest = { isDropDownExpanded.value = false },
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
-                users.forEach {user ->
+                users?.forEach { user ->
                     val isSelected = user in selectedUsers
                     DropdownMenuItem(
                         text = {
@@ -186,17 +199,32 @@ fun AddPayersView(modifier: Modifier = Modifier, group: Group, onAddExpense: () 
         Spacer(modifier = Modifier.height(128.dp))
 
         Button(
-            onClick = { val updatedExpense = expense.copy(payers = selectedUsers.toTypedArray())
-                        val updatedGroup = group.copy(expenses = group.expenses.copyOf().apply {
-                            this[this.lastIndex] = updatedExpense
-                        })
-                        println(updatedGroup)
-                        onAddExpense()
-                      },
+            onClick = {
+                val updatedExpense = expense?: Expense(
+                    amount = 1.toFloat(),
+                    description = "TODO()",
+                    lender = User("123123", "TODO()", null),
+                    payers = emptyArray()
+                ).copy(payers = selectedUsers.toTypedArray())
+                val updatedGroup = group?.copy(
+                    expenses = group.expenses.apply {
+                        this[this.lastIndex] = updatedExpense
+                    }
+                )
+                println(updatedGroup)
+                onAddExpense(group?: Group(
+                    name = "TODO()",
+                    users = emptySet(),
+                    expenses = mutableListOf(updatedExpense),
+                    id = 1,
+                    messages = emptyArray()
+                ))
+            },
             modifier = Modifier.padding(horizontal = 14.dp).height(64.dp),
             shape = RoundedCornerShape(12.dp),
             enabled = selectedUsers.isNotEmpty()
-        ) {
+        )
+        {
             Text(
                 text = "Add Expense with ${selectedUsers.size} payer${if (selectedUsers.size != 1) "s" else ""}"
             )
@@ -211,7 +239,7 @@ fun AddToExpenseView() {
     val group = testData()
 
     Scaffold (modifier = Modifier.fillMaxSize()){ innerPadding ->
-        AddPayersView(modifier = Modifier.padding(innerPadding), group = group)
+        AddPayersView(modifier = Modifier.padding(innerPadding), groupId = 1)
     }
 }
 
@@ -228,8 +256,9 @@ fun testData(): Group {
     val group = Group(
         name = "Weekend trip",
         users = setOf(user1, user2, user3),
-        expenses = arrayOf(expense),
-        messages = arrayOf(messages)
+        expenses = mutableListOf(expense),
+        messages = arrayOf(messages),
+        id = 1
     )
     return group
 }
