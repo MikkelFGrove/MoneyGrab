@@ -59,7 +59,11 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // gson converter
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.compose.material3)
+    implementation("androidx.wear.compose:compose-material:1.3.0")
+    implementation ("androidx.wear.compose:compose-foundation:1.3.0")
+    implementation ("androidx.wear.compose:compose-navigation:1.3.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
