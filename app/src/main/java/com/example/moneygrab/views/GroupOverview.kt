@@ -131,10 +131,9 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
             stickyHeader {
                 Card(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF1E88E5)), // background for proper stickiness
+                        .fillMaxWidth(),
                     shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E88E5)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Row(
@@ -149,15 +148,14 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                             text = "Groups",
                             fontSize = 45.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
                                 .clip(CircleShape)
-                                .background(Color.White)
                                 .clickable(onClick = onProfileClicked)
+                                .background(color = MaterialTheme.colorScheme.background)
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.ic_profile_placeholder),
@@ -185,7 +183,7 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
 
         // Sticky "+" button
         Button(
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5)),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
             onClick = onCreateGroupClicked,
             shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier
@@ -213,7 +211,7 @@ fun GroupCard(name: String, modifier: Modifier = Modifier, onClick: () -> Unit =
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E88E5)
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
 
@@ -224,7 +222,6 @@ fun GroupCard(name: String, modifier: Modifier = Modifier, onClick: () -> Unit =
             text = name,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
         )
         }
     }
