@@ -98,7 +98,11 @@ fun ProfilePage(
 
         // Logout button
         Button(
-            onClick = onLogoutClick,
+            onClick = {
+                currentUser.clear()
+                println("What")
+                onLogoutClick()
+                      },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),

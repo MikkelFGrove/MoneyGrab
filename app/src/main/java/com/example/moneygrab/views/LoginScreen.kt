@@ -1,5 +1,6 @@
 package com.example.moneygrab.views
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.authentication.CurrentUser
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
@@ -44,7 +47,7 @@ class LoginViewModel() : ViewModel() {
     var wrongCredentials = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
 
-    fun login(navigation: () -> Unit) {
+    fun login(navigation: () -> Unit, context: Context) {
         viewModelScope.launch {
             val response = try {
                 api.login(APIEndpoints.LoginData(phone.value, password.value))
@@ -58,8 +61,11 @@ class LoginViewModel() : ViewModel() {
                 errorMessage.value = "The phone number or password is incorrect"
                 wrongCredentials.value = true
             } else {
-                // Set user in context
-                navigation()
+                response.body()?.let {
+                    CurrentUser(context).saveUser(it)
+                    navigation()
+                }
+
             }
         }
     }
@@ -72,6 +78,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
     var password by loginViewModel.password
     var wrongCredentials by loginViewModel.wrongCredentials
     var errorMessage by loginViewModel.errorMessage
+    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -109,7 +116,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
 
 
         Button(
-            onClick = { loginViewModel.login(onLoginClicked) },
+            onClick = { loginViewModel.login(onLoginClicked, context) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),

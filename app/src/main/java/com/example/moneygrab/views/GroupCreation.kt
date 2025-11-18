@@ -114,7 +114,7 @@ class GroupViewModel() : ViewModel() {
                 null
             }
 
-            if (response?.code() != 200) {
+            if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "An error has occurred on the server"
                 errorCreatingGroup.value = true
             } else {
