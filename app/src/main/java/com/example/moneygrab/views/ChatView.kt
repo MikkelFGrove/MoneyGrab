@@ -76,11 +76,12 @@ fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDe
                         .defaultMinSize(minWidth = 3.dp, minHeight = 3.dp)
 
                 ) {
-                    Text(calculatedSum.toString() +  "DKK", color = color)
+                    Text(calculatedSum.toString() + " DKK", color = color, fontSize = MaterialTheme.typography.titleLarge.fontSize)
                 }
             }
             Text(
                 text = groupName,
+                fontSize = MaterialTheme.typography.titleLarge.fontSize,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.align(Alignment.Center)
             )
@@ -157,7 +158,7 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
                     modifier = Modifier,
                     shape = RoundedCornerShape(5.dp)
                 ) {
-                    Text("Add Expense")
+                    Text("Add Expense", fontSize = MaterialTheme.typography.titleLarge.fontSize)
                 }
                 Button(
                     onClick = { onNotifyUsers() },
@@ -165,7 +166,7 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
                     shape = RoundedCornerShape(5.dp)
 
                 ) {
-                    Text("Notify users")
+                    Text("Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
                 }
             }
         }
@@ -236,11 +237,10 @@ fun DialogCloseTheTab(
     group: Group
 ) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
-        // Draw a rectangle shape with rounded corners inside the dialog
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(375.dp)
+                .height(250.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -251,10 +251,10 @@ fun DialogCloseTheTab(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Do you wish to close the tab? " +
-                            "No more expenses can be added before all members" +
+                    text = "Do you wish to close the tab? \n" +
+                            "No more expenses can be added before all members " +
                             "have paid their debts.",
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(5.dp),
                 )
                 Row(
                     modifier = Modifier
@@ -265,13 +265,13 @@ fun DialogCloseTheTab(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Dismiss")
+                        Text("No")
                     }
                     TextButton(
                         onClick = { onConfirmation(group) },
                         modifier = Modifier.padding(8.dp),
                     ) {
-                        Text("Confirm")
+                        Text("Close Tab")
                     }
                 }
             }

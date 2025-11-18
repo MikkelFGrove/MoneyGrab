@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -19,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,6 +29,7 @@ import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.CurrentUser
+import com.example.moneygrab.R
 
 
 private fun fetchGroup(id: Int): Group?{
@@ -46,8 +50,24 @@ fun AddExpenseView(groupId: Int, addToExpense: (Group?) -> Unit, back: () -> Uni
 
     val group = fetchGroup(groupId)?: fetchGroups(currentUser).first()
 
-    Button(modifier = Modifier.padding(start= 10.dp, top = 10.dp), onClick = back) {
-        Text("Back")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Top bar for arrow and edit
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = back) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_back),
+                    contentDescription = "Back"
+                )
+            }
+        }
     }
 
     Column(
@@ -64,12 +84,11 @@ fun AddExpenseView(groupId: Int, addToExpense: (Group?) -> Unit, back: () -> Uni
             TextField(
                 value = amount,
                 onValueChange = { amount = it },
-                modifier = Modifier.weight(1f)
-                    .padding(end = 10.dp),
+                modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Amount") },
+                suffix = { Text("DKK", style = MaterialTheme.typography.bodyLarge)},
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number), singleLine = true
             )
-            Text("DKK", style = MaterialTheme.typography.bodyLarge)
         }
 
         TextField(
