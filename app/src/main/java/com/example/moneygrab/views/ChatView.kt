@@ -138,25 +138,42 @@ fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun InputBar(addExpense: (Group) -> Unit, group: Group) {
-    Surface (modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp)
-    {
-        Button(
-            onClick = { addExpense(group) },
+fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Group) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
+    ) {
+        Box(
             modifier = Modifier
-                .padding(start= 50.dp, end = 50.dp, top = 5.dp, bottom = 5.dp),
-            shape = RoundedCornerShape(5.dp)
-
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Text("Add Expense")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Button(
+                    onClick = { addExpense(group) },
+                    modifier = Modifier,
+                    shape = RoundedCornerShape(5.dp)
+                ) {
+                    Text("Add Expense")
+                }
+                Button(
+                    onClick = { onNotifyUsers() },
+                    modifier = Modifier,
+                    shape = RoundedCornerShape(5.dp)
 
+                ) {
+                    Text("Notify users")
+                }
+            }
         }
     }
-
 }
 
 @Composable
-fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit) {
+fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit, onNotifyUsers: () -> Unit) {
     var showCloseDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }.getUser()
@@ -181,7 +198,7 @@ fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
                 .fillMaxWidth()
         )
 
-        InputBar(addExpense, group)
+        InputBar(onNotifyUsers, addExpense, group)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
