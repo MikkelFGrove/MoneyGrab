@@ -184,7 +184,7 @@ app.post('/groups', (req, res) => {
     );
 });
 
-//Create new expense
+//Create new expense (This assumes that the payers is an array when being send to the backend)
 app.post('/expenses', (req, res) => {
     const { owner, group, description, amount, payers } = req.body;
 
@@ -210,7 +210,7 @@ app.post('/expenses', (req, res) => {
 });
 
 
-//TODO: POST /transactions
+//Create new transaction
 app.post('/transactions', (req, res) =>{
     const { sender, receiver, amount, paid = 0, expenseId } = req.body;
     const paymentTimeValue = paid === 1 ? 'CURRENT_TIMESTAMP' : '0';
