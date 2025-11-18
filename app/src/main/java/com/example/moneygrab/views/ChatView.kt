@@ -13,21 +13,93 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
-import com.example.moneygrab.CurrentUser
+import com.example.debtcalculator.data.Message
+import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
-import kotlin.system.exitProcess
-
-import com.example.moneygrab.views.TestData
+import com.example.moneygrab.RetrofitClient
+import kotlinx.coroutines.launch
+import com.example.authentication.CurrentUser
 
 data class MoneyRequest(val text: String, val isMine: Boolean)
+
+class ChatViewModel() : ViewModel() {
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    var user: User? = null
+    var group: Group = Group(
+        id = -1,
+        name = "",
+        users = emptySet<User>(),
+        expenses = emptyList<Expense>() as MutableList<Expense>,
+        tabClosed = false,
+        messages = emptyList<Message>()
+    )
+    var amountOwed = mutableFloatStateOf(Float.NaN)
+    var messages = mutableStateListOf<Message>()
+    var errorHappened = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
+    var showCloseDialog = mutableStateOf(false)
+
+    fun fetchGroupData(groupId: Int) {
+        viewModelScope.launch {
+            val response = try {
+                api.getGroup(groupId)
+            } catch (e: Exception) {
+                errorMessage.value = "An error has occurred"
+                errorHappened.value = true
+                null
+            }
+
+            if (response?.code() != 200) {
+                errorMessage.value = "The phone number or password is incorrect"
+                errorHappened.value = true
+            } else {
+                response.body()?.let {
+                    group = it
+                }
+            }
+        }
+    }
+
+    fun fetchAmountOwed() {
+        viewModelScope.launch {
+            user?.let {
+                val response = try {
+                    api.getAmountOwed(group.id, it.phoneNumber)
+                } catch (e: Exception) {
+                    null
+                }
+
+                response?.body()?.let {
+                    amountOwed.floatValue = it
+                }
+            }
+        }
+    }
+
+    fun closeTab() {
+        viewModelScope.launch {
+            val response = try {
+                api.closeTab(group.id)
+            } catch (e: Exception) {
+                null
+            }
+
+            response?.let {
+                fetchGroupData(group.id)
+            }
+        }
+    }
+}
+
 @Composable
 fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDebt: () -> Unit) {
 
@@ -156,18 +228,22 @@ fun InputBar(addExpense: (Group) -> Unit, group: Group) {
 }
 
 @Composable
-fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit) {
-    var showCloseDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val currentUser = remember { CurrentUser(context) }.getUser()
-    val group = fetchGroup(groupID)?: fetchGroups(currentUser).first()
+fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit) {
+    val chatViewModel: ChatViewModel = viewModel()
+    var showCloseDialog by chatViewModel.showCloseDialog
+    var groupName = chatViewModel.group.name
+    var expenses = chatViewModel.group.expenses
 
-    println("insidechat screen" + groupID)
+    LaunchedEffect(groupId) {
+        chatViewModel.fetchGroupData(groupId)
+        chatViewModel.fetchAmountOwed()
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
-            groupName = group?.name ?: "null",
-            calculatedSum = getSum(currentUser, group),
+            groupName = groupName,
+            //Change to API-call 😁
+            calculatedSum = 0.00,
             onBack = onBack,
             onPayDebt = {
                 showCloseDialog = true
@@ -175,19 +251,19 @@ fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
         )
 
         MessagesList(
-            messages = group?.expenses?.toMutableList() ?: emptyList(),
+            messages = expenses,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         )
 
-        InputBar(addExpense, group)
+        InputBar(addExpense, chatViewModel.group)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
                 onDismissRequest = { showCloseDialog = false },
-                onConfirmation = { onConfirmation(group) },
-                group = group
+                onConfirmation = { onConfirmation },
+                group = chatViewModel.group
             )
         }
     }
@@ -267,12 +343,7 @@ fun DialogCloseTheTab(
 fun ChatScreenPreview() {
     val group = TestData()
     MaterialTheme {
-        ChatScreen(
-            group = 1,
-            addExpense = { println("Norway") },
-            onConfirmation = { println("meep") },
-            groupID = TODO(),
-            onBack = TODO()
+        ChatScreen(groupId = 1, addExpense = {println("Norway")}
         )
     }
 }

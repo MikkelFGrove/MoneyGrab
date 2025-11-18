@@ -3,15 +3,17 @@ package com.example.moneygrab
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class RetrofitClient{
-    private val retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://example.com/")
+class RetrofitClient {
+    companion object {
+        private val instance = Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:3000")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-    }
 
-    val api: APIEndpoints by lazy {
-        retrofit.create(APIEndpoints::class.java)
+        private val api: APIEndpoints = instance.create<APIEndpoints>(APIEndpoints::class.java)
+
+        fun getAPI(): APIEndpoints {
+            return api;
+        }
     }
 }

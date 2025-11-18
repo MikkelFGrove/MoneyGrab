@@ -16,7 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.debtcalculator.data.Group
+import com.example.authentication.CurrentUser
 import com.example.moneygrab.views.ChatScreen
 import com.example.moneygrab.views.LoginScreen
 import com.example.moneygrab.views.SignUpScreen
@@ -35,10 +35,7 @@ import com.example.moneygrab.views.TestData
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var apiInterface: APIEndpoints
-
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -57,7 +54,7 @@ fun NavManager() {
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }
 
-    val startDestination = if (currentUser != null) "groupPage" else "login"
+    val startDestination = if (currentUser.getUser() != null) "groupPage" else "login"
 
     Scaffold { innerPadding ->
         NavHost(
@@ -66,14 +63,14 @@ fun NavManager() {
             modifier = Modifier.padding(innerPadding)
         ) {
                 composable("signup") {
-                    SignUpScreen(onSignUpSuccess = {
+                    SignUpScreen(onSignUpClicked = {
                         navController.navigate("ProfilePage")
                     })
                 }
 
                 composable("login") {
                     LoginScreen(
-                        onLoginSuccess = { navController.navigate("groupPage") },
+                        onLoginClicked = { navController.navigate("groupPage") },
                         onSignupClicked = { navController.navigate("signUp") }
                     )
                 }
@@ -95,12 +92,11 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
 
                     ChatScreen(
-                        groupID = groupId,
-                        addExpense = { Group -> navController.navigate("addExpense/${Group.id}") },
+                        groupId = groupId,
+                        addExpense = { group -> navController.navigate("addExpense/${group.id}") },
                         onBack = { navController.navigateUp() },
-                        onConfirmation = { Group ->
-                            navController.navigate("confirmPayment/${Group.id}")
-                            println("Configrm")
+                        onConfirmation = { group ->
+                            navController.navigate("confirmPayment/${group.id}")
                         }
                     )
                 }

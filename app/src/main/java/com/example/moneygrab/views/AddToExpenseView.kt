@@ -6,20 +6,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -27,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -37,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,7 +41,7 @@ import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.Message
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.R
-import com.example.moneygrab.CurrentUser
+import com.example.authentication.CurrentUser
 import kotlin.time.TimeSource
 
 /*
@@ -63,9 +57,9 @@ fun View() {
 
 @Composable
 fun TestData(): Group {
-    val user1 = User("13241234","test1", null)
-    val user2 = User("23412341","test2", null)
-    val user3 = User("34123412","test3", null)
+    val user1 = User(-1, "13241234","test1", null)
+    val user2 = User(-1, "23412341","test2", null)
+    val user3 = User(-1, "34123412","test3", null)
 
     val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
     val mark = TimeSource.Monotonic.markNow()
@@ -75,8 +69,9 @@ fun TestData(): Group {
         name = "Weekend trip",
         users = setOf(user1, user2, user3),
         expenses = mutableListOf(expense),
-        messages = arrayOf(messages),
-        id = 1
+        messages = listOf(messages),
+        id = 1,
+        tabClosed = false
     )
     return group
 }
@@ -204,7 +199,7 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
                 val updatedExpense = expense?: Expense(
                     amount = 1.toFloat(),
                     description = "TODO()",
-                    lender = User("123123", "TODO()", null),
+                    lender = User(-1, "123123", "TODO()", null),
                     payers = emptyArray()
                 ).copy(payers = selectedUsers.toTypedArray())
                 val updatedGroup = group?.copy(
@@ -213,13 +208,7 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
                     }
                 )
                 println(updatedGroup)
-                onAddExpense(group?: Group(
-                    name = "TODO()",
-                    users = emptySet(),
-                    expenses = mutableListOf(updatedExpense),
-                    id = 1,
-                    messages = emptyArray()
-                ))
+                onAddExpense(group)
             },
             modifier = Modifier.padding(horizontal = 14.dp).height(64.dp),
             shape = RoundedCornerShape(12.dp),
@@ -246,9 +235,9 @@ fun AddToExpenseView() {
 
 @Composable
 fun testData(): Group {
-    val user1 = User("13241234","test1", null)
-    val user2 = User("23412341","test2", null)
-    val user3 = User("34123412","test3", null)
+    val user1 = User(-1, "13241234","test1", null)
+    val user2 = User(-1, "23412341","test2", null)
+    val user3 = User(-1, "34123412","test3", null)
 
     val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
     val mark = TimeSource.Monotonic.markNow()
@@ -258,8 +247,9 @@ fun testData(): Group {
         name = "Weekend trip",
         users = setOf(user1, user2, user3),
         expenses = mutableListOf(expense),
-        messages = arrayOf(messages),
-        id = 1
+        messages = listOf(messages),
+        id = 1,
+        tabClosed = false
     )
     return group
 }
