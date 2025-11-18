@@ -154,6 +154,26 @@ fun ErrorCard(text: String, modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun ErrorCard(text: String, modifier: Modifier = Modifier) {
+    Card (
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraSmall,
+        colors = CardColors(
+            MaterialTheme.colorScheme.error,
+            MaterialTheme.colorScheme.onError,
+            Color.Transparent,
+            Color.Transparent
+        )
+    ) {
+        Text (
+            modifier = Modifier.fillMaxWidth().padding(0.dp, 5.dp),
+            text = text,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
