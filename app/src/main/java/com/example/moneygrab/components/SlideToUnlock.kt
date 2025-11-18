@@ -59,7 +59,6 @@ import androidx.wear.compose.material.SwipeableState
 import androidx.wear.compose.material.rememberSwipeableState
 import androidx.wear.compose.material.swipeable
 
-import com.example.moneygrab.ui.theme.DemoSlideToUnlockTheme
 import kotlin.math.roundToInt
 
 
@@ -188,12 +187,12 @@ fun Track(
     )
 }
 
-val AlmostBlack = Color(0xFF111111)
-val Yellow = Color(0xFFFFDB00)
+val AlmostBlack = Color(0xFF00341C)
+val Green= Color(0xFF809685)
 fun calculateTrackColor(swipeFraction: Float): Color {
-    val endOfColorChangeFraction = 0.4f
+    val endOfColorChangeFraction = 0.75f
     val fraction = (swipeFraction / endOfColorChangeFraction).coerceIn(0f..1f)
-    return lerp(AlmostBlack, Yellow, fraction)
+    return lerp(AlmostBlack, Green, fraction)
 }
 
 @Composable
@@ -262,7 +261,6 @@ private object Track {
 private fun Preview() {
     val previewBackgroundColor = Color(0xFFEDEDED)
     var isLoading by remember { mutableStateOf(false) }
-    DemoSlideToUnlockTheme {
         val spacing = 88.dp
         Column(
             verticalArrangement = spacedBy(8.dp),
@@ -337,4 +335,3 @@ private fun Preview() {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
-}
