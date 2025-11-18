@@ -88,13 +88,14 @@ fun AddExpenseView(groupId: Int, addToExpense: (Group?) -> Unit, back: () -> Uni
                     description = description,
                     //CHANGE THIS WHEN AUTH CONTEXT
                     lender = currentUser?: User(
+                        id = -1,
                         phoneNumber = "0",
                         name = "TODO()",
                         image = null
                     ),
                     payers = group?.users?.toTypedArray()?: emptyArray<User>()
                 )
-                group?.expenses?.add(expense)
+                group.expenses?.add(expense)
                 addToExpense(group) },
             modifier = Modifier.fillMaxWidth()
         ) {

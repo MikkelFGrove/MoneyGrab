@@ -35,7 +35,7 @@ db.serialize(() => {
     phoneNumber TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     name TEXT NOT NULL,
-    image BLOB
+    image TEXT
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS messages (
@@ -157,6 +157,7 @@ app.get('/groups/:id/messages', (req, res) => {
             res.json(rows);
         });
 });
+
 
 // get group by id
 app.get('/groups/:id', (req, res) => {

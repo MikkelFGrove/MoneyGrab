@@ -9,6 +9,7 @@ class CurrentUser(context: Context) {
 
     fun saveUser(user: User) {
         prefs.edit().apply {
+            putInt("id", user.id)
             putString("phone", user.phoneNumber)
             putString("username", user.name)
             apply()
@@ -16,9 +17,10 @@ class CurrentUser(context: Context) {
     }
 
     fun getUser(): User? {
+        val id = prefs.getInt("id", -1)
         val phone = prefs.getString("phone", null) ?: return null
         val name = prefs.getString("username", null) ?: return null
-        return User(phone, name, null)
+        return User(id, phone, name, null)
     }
 
     fun clear() {

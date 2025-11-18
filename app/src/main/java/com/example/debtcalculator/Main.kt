@@ -8,9 +8,9 @@ import com.example.debtcalculator.services.DebtCalculatorService
 fun main() {
     val debtCalculatorService = DebtCalculatorService()
 
-    val userJoe = User("12341234", "Joe Mama", null)
-    val userJohn = User("12345678", "John Bandit", null)
-    val userSonny = User("87654321", "Sonny Riskiks", null)
+    val userJoe = User(0, "12341234", "Joe Mama", null)
+    val userJohn = User(0, "12345678", "John Bandit", null)
+    val userSonny = User(0, "87654321", "Sonny Riskiks", null)
 
     val banankage = Expense(100f, "Banankage", userJohn, arrayOf(userJoe, userSonny, userJohn))
     val riskiks = Expense(10.95f, "Riskiks", userSonny, arrayOf(userJoe, userJohn, userSonny))

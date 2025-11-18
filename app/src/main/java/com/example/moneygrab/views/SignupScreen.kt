@@ -1,5 +1,6 @@
 package com.example.moneygrab.views
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -20,12 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.authentication.CurrentUser
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 
-// TODO - Pass on user information to a User Context, this context could be injected into the ViewModel
 class SignupViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var name = mutableStateOf("")
@@ -34,22 +37,26 @@ class SignupViewModel() : ViewModel() {
     var errorHasOccurred = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
 
-    fun signup(navigation: () -> Unit) {
+    fun signup(navigation: () -> Unit, context: Context) {
         viewModelScope.launch {
             val response = try {
-                api.login(APIEndpoints.LoginData(phone.value, password.value))
+                api.signup(APIEndpoints.SignupData(phone.value, password.value, name.value,""))
             } catch (e: Exception) {
+                println(e.message)
                 errorMessage.value = "An error has occurred"
                 errorHasOccurred.value = true
                 null
             }
 
-            if (response?.code() != 200) {
+            if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "The phone number is already in use"
+                println(response?.body()?.name)
                 errorHasOccurred.value = true
             } else {
-                // Set user in Context
-                navigation()
+                response.body()?.let {
+                    CurrentUser(context).saveUser(it)
+                    navigation()
+                }
             }
         }
     }
@@ -58,14 +65,15 @@ class SignupViewModel() : ViewModel() {
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    signupViewModel: SignupViewModel = SignupViewModel(),
     onSignUpClicked: () -> Unit,
 ) {
+    val signupViewModel: SignupViewModel = viewModel()
     var name by signupViewModel.name
     var phone by signupViewModel.phone
     var password by signupViewModel.password
     var errorMessage by signupViewModel.errorMessage
     var errorHasOccurred by signupViewModel.errorHasOccurred
+    var context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -113,7 +121,7 @@ fun SignUpScreen(
         Spacer(Modifier.height(20.dp))
 
         Button(
-            onClick = { signupViewModel.signup(onSignUpClicked) },
+            onClick = { signupViewModel.signup(onSignUpClicked, context) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)

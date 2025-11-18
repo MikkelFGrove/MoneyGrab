@@ -129,8 +129,8 @@ fun GroupCreationView(
     onBack: () -> Unit,
     onCreateGroupNavigation: () -> Unit,
     modifier: Modifier = Modifier,
-    groupViewModel: GroupViewModel = viewModel()
 ) {
+    val groupViewModel: GroupViewModel = viewModel()
     var errorCreatingGroup by groupViewModel.errorCreatingGroup
     var groupName by groupViewModel.groupName
     var errorMessage by groupViewModel.errorMessage

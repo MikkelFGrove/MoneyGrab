@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
@@ -227,10 +228,11 @@ fun InputBar(addExpense: (Group) -> Unit, group: Group) {
 }
 
 @Composable
-fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit, chatViewModel: ChatViewModel = ChatViewModel()) {
+fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit) {
+    val chatViewModel: ChatViewModel = viewModel()
     var showCloseDialog by chatViewModel.showCloseDialog
-    var groupName = chatViewModel.group?.name
-    var expenses = chatViewModel.group?.expenses
+    var groupName = chatViewModel.group.name
+    var expenses = chatViewModel.group.expenses
 
     LaunchedEffect(groupId) {
         chatViewModel.fetchGroupData(groupId)
@@ -239,7 +241,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
-            groupName = groupName?: "",
+            groupName = groupName,
             //Change to API-call 😁
             calculatedSum = 0.00,
             onBack = onBack,
@@ -249,7 +251,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
         )
 
         MessagesList(
-            messages = expenses?: emptyList(),
+            messages = expenses,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()

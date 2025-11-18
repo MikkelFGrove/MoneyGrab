@@ -19,8 +19,14 @@ interface APIEndpoints {
     @POST("groups")
     suspend fun createGroup(@Body body: GroupData): Response<Int>
 
+    @GET("/users/{id}/groups")
+    suspend fun getGroups(@Path("id") id: Int): Response<List<Group>>
+
     @POST("login")
     suspend fun login(@Body body: LoginData): Response<com.example.debtcalculator.data.User>
+
+    @POST("users")
+    suspend fun signup(@Body body: SignupData): Response<com.example.debtcalculator.data.User>
 
     @GET("groups/{id}")
     suspend fun getGroup(@Path("id") id: Int): Response<Group>
@@ -39,5 +45,12 @@ interface APIEndpoints {
     data class GroupData (
         val name: String,
         val users: List<User>
+    )
+
+    data class SignupData (
+        val phoneNumber: String,
+        val password: String,
+        val name: String,
+        val image: String?
     )
 }

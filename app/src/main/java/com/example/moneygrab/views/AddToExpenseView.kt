@@ -57,9 +57,9 @@ fun View() {
 
 @Composable
 fun TestData(): Group {
-    val user1 = User("13241234","test1", null)
-    val user2 = User("23412341","test2", null)
-    val user3 = User("34123412","test3", null)
+    val user1 = User(-1, "13241234","test1", null)
+    val user2 = User(-1, "23412341","test2", null)
+    val user3 = User(-1, "34123412","test3", null)
 
     val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
     val mark = TimeSource.Monotonic.markNow()
@@ -199,7 +199,7 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
                 val updatedExpense = expense?: Expense(
                     amount = 1.toFloat(),
                     description = "TODO()",
-                    lender = User("123123", "TODO()", null),
+                    lender = User(-1, "123123", "TODO()", null),
                     payers = emptyArray()
                 ).copy(payers = selectedUsers.toTypedArray())
                 val updatedGroup = group?.copy(
@@ -235,9 +235,9 @@ fun AddToExpenseView() {
 
 @Composable
 fun testData(): Group {
-    val user1 = User("13241234","test1", null)
-    val user2 = User("23412341","test2", null)
-    val user3 = User("34123412","test3", null)
+    val user1 = User(-1, "13241234","test1", null)
+    val user2 = User(-1, "23412341","test2", null)
+    val user3 = User(-1, "34123412","test3", null)
 
     val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
     val mark = TimeSource.Monotonic.markNow()
