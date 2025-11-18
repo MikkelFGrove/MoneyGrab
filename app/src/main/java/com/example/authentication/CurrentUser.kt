@@ -1,4 +1,4 @@
-package com.example.moneygrab
+package com.example.authentication
 
 import android.content.Context
 import com.example.debtcalculator.data.User

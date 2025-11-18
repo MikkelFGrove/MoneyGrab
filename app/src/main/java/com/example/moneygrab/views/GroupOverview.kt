@@ -42,9 +42,8 @@ import androidx.compose.ui.unit.sp
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
-import com.example.moneygrab.CurrentUser
+import com.example.authentication.CurrentUser
 import com.example.moneygrab.R
-import com.example.moneygrab.RetrofitClient
 
 @Immutable
 data class FrontendGroup(val id: Int, val name: String)
@@ -86,24 +85,27 @@ fun fetchGroups(user: User?): List<Group>{
         name = "Friends",
         users = setOf(userA, userB),
         expenses = mutableListOf(expense1),
-        messages = emptyArray(), // Empty as requested
-        id = 1
+        messages = emptyList(), // Empty as requested
+        id = 1,
+        tabClosed = false
     )
 
     val group2 = Group(
         name = "Family",
         users = setOf(userC, userD),
         expenses = mutableListOf(expense2),
-        messages = emptyArray(),
-        id = 2
+        messages = emptyList(),
+        id = 2,
+        tabClosed = false
     )
 
     val group3 = Group(
         name = "Work Trip",
         users = setOf(userA, userB, userC, userD),
         expenses = mutableListOf(expense3),
-        messages = emptyArray(),
-        id = 3
+        messages = emptyList(),
+        id = 3,
+        tabClosed = false
     )
 
     return listOf(group1, group2, group3)

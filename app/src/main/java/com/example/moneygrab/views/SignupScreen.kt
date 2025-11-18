@@ -64,8 +64,8 @@ fun SignUpScreen(
     var name by signupViewModel.name
     var phone by signupViewModel.phone
     var password by signupViewModel.password
-    var errorHasOccured by signupViewModel.errorHasOccurred
     var errorMessage by signupViewModel.errorMessage
+    var errorHasOccurred by signupViewModel.errorHasOccurred
 
     Column(
         modifier = modifier
@@ -111,12 +111,6 @@ fun SignUpScreen(
         )
 
         Spacer(Modifier.height(20.dp))
-        
-        if (errorHasOccured) {
-            ErrorCard(errorMessage)
-
-            Spacer(Modifier.height(20.dp))
-        }
 
         Button(
             onClick = { signupViewModel.signup(onSignUpClicked) },
@@ -127,33 +121,12 @@ fun SignUpScreen(
             Text("Create account", fontSize = 18.sp)
         }
 
-        errorMessage?.let {
+        if (errorHasOccurred) {
             Spacer(Modifier.height(12.dp))
-            Text(it, color = Color.Red)
+            Text(errorMessage, color = Color.Red)
         }
     }
 }
-
-@Composable
-fun ErrorCard(text: String, modifier: Modifier = Modifier) {
-    Card (
-        modifier = modifier,
-        shape = MaterialTheme.shapes.extraSmall,
-        colors = CardColors(
-            MaterialTheme.colorScheme.error,
-            MaterialTheme.colorScheme.onError,
-            Color.Transparent,
-            Color.Transparent
-        )
-    ) {
-        Text (
-            modifier = Modifier.fillMaxWidth().padding(0.dp, 5.dp),
-            text = text,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
 @Composable
 fun ErrorCard(text: String, modifier: Modifier = Modifier) {
     Card (
@@ -182,4 +155,4 @@ fun SignUpScreenPreview() {
             onSignUpClicked = { }
         )
     }
-}*/
+}

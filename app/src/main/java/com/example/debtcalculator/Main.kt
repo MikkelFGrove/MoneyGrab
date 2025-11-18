@@ -16,16 +16,16 @@ fun main() {
     val riskiks = Expense(10.95f, "Riskiks", userSonny, arrayOf(userJoe, userJohn, userSonny))
     val skraldesække = Expense(250f, "Skraldesække", userJoe, arrayOf(userJohn, userJoe, userSonny))
 
-    val group = Group(
-        "Group",
+/*    val group = Group(
+        id = 1,
+        name="Some Group",
         setOf(userJoe, userJohn, userSonny),
         mutableListOf(banankage, riskiks, skraldesække),
-        arrayOf(),
-        id = 1
+        tabClosed = false
         )
     val balances = debtCalculatorService.calculateBalances(group)
     println(balances)
 
     val transactions = debtCalculatorService.determineTransactions(group)
-    println(transactions)
+    println(transactions)*/
 }

@@ -3,10 +3,6 @@ package com.example.moneygrab.views
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
-import com.example.moneygrab.CurrentUser
+import com.example.authentication.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.components.SlideToUnlock
 import com.example.moneygrab.ui.theme.MoneyGrabTheme

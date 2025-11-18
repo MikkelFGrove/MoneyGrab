@@ -13,41 +13,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.debtcalculator.data.Expense
+import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
 import com.example.debtcalculator.data.Message
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
-import com.example.moneygrab.views.TestData
 import kotlinx.coroutines.launch
+import com.example.authentication.CurrentUser
 
 data class MoneyRequest(val text: String, val isMine: Boolean)
 
 class ChatViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var user: User? = null
-    var groupId = mutableIntStateOf(-1)
-    var groupName = mutableStateOf("")
-    var expenses = mutableStateListOf<Expense>()
-    var tabClosed = mutableStateOf(false)
+    var group: Group = Group(
+        id = -1,
+        name = "",
+        users = emptySet<User>(),
+        expenses = emptyList<Expense>() as MutableList<Expense>,
+        tabClosed = false,
+        messages = emptyList<Message>()
+    )
     var amountOwed = mutableFloatStateOf(Float.NaN)
     var messages = mutableStateListOf<Message>()
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
     var showCloseDialog = mutableStateOf(false)
 
-    fun fetchGroupData() {
+    fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
             val response = try {
-                api.getGroup(groupId.intValue)
+                api.getGroup(groupId)
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 errorHappened.value = true
@@ -59,11 +62,7 @@ class ChatViewModel() : ViewModel() {
                 errorHappened.value = true
             } else {
                 response.body()?.let {
-                    groupName.value = it.name
-                    expenses.clear()
-                    expenses.addAll(it.expenses)
-                    messages.clear()
-                    messages.addAll(it.messages)
+                    group = it
                 }
             }
         }
@@ -73,14 +72,13 @@ class ChatViewModel() : ViewModel() {
         viewModelScope.launch {
             user?.let {
                 val response = try {
-                    api.getAmountOwed(groupId.intValue, it.phoneNumber)
+                    api.getAmountOwed(group.id, it.phoneNumber)
                 } catch (e: Exception) {
                     null
                 }
 
-                response?.let {
-                    tabClosed.value = true
-                    fetchGroupData()
+                response?.body()?.let {
+                    amountOwed.floatValue = it
                 }
             }
         }
@@ -89,14 +87,13 @@ class ChatViewModel() : ViewModel() {
     fun closeTab() {
         viewModelScope.launch {
             val response = try {
-                api.closeTab(groupId.intValue)
+                api.closeTab(group.id)
             } catch (e: Exception) {
                 null
             }
 
             response?.let {
-                tabClosed.value = true
-                fetchGroupData()
+                fetchGroupData(group.id)
             }
         }
     }
@@ -230,20 +227,19 @@ fun InputBar(addExpense: (Group) -> Unit, group: Group) {
 }
 
 @Composable
-fun ChatScreen(groupId: Int, addExpense: () -> Unit, onBack: () -> Unit = {}, chatViewModel: ChatViewModel = ChatViewModel()) {
+fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit, chatViewModel: ChatViewModel = ChatViewModel()) {
     var showCloseDialog by chatViewModel.showCloseDialog
-    var groupName = chatViewModel.groupName
-    var expenses = chatViewModel.expenses
+    var groupName = chatViewModel.group?.name
+    var expenses = chatViewModel.group?.expenses
 
     LaunchedEffect(groupId) {
-        chatViewModel.groupId.intValue = groupId
-        chatViewModel.fetchGroupData()
+        chatViewModel.fetchGroupData(groupId)
         chatViewModel.fetchAmountOwed()
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
-            groupName = groupName.value,
+            groupName = groupName?: "",
             //Change to API-call 😁
             calculatedSum = 0.00,
             onBack = onBack,
@@ -253,18 +249,19 @@ fun ChatScreen(groupId: Int, addExpense: () -> Unit, onBack: () -> Unit = {}, ch
         )
 
         MessagesList(
-            messages = expenses,
+            messages = expenses?: emptyList(),
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         )
 
-        InputBar(addExpense, group)
+        InputBar(addExpense, chatViewModel.group)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
                 onDismissRequest = { showCloseDialog = false },
-                onConfirmation = { chatViewModel.closeTab() }
+                onConfirmation = { onConfirmation },
+                group = chatViewModel.group
             )
         }
     }

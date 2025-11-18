@@ -104,11 +104,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        if (wrongCredentials) {
-            ErrorCard(errorMessage)
 
-            Spacer(modifier = Modifier.height(20.dp))
-        }
 
         Button(
             onClick = { loginViewModel.login(onLoginClicked) },
@@ -118,9 +114,10 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
         ) {
             Text("Login")
         }
-        errorMessage?.let {
+
+        if (wrongCredentials) {
             Spacer(modifier = Modifier.height(12.dp))
-            Text(it, color = Color.Red)
+            Text(errorMessage, color = Color.Red)
         }
 
         Spacer(Modifier.height(12.dp))
@@ -143,24 +140,13 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
     }
 }
 
-fun loginUser(phone: String, password: String): User {
-    val api = RetrofitClient().api
-    /*return try {
-        //val loginRequest = LoginRequest(phone, password)
-        //api.login(loginRequest)
-    } catch (e: Exception) {
-        User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
-    }*/
-    return User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
-}
-
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
     MoneyGrabTheme {
         LoginScreen(
             onSignupClicked = {},
-            onLoginSuccess = {}
+            onLoginClicked = {}
         )
     }
 }

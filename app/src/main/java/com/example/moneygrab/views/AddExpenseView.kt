@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
-import com.example.moneygrab.CurrentUser
+import com.example.authentication.CurrentUser
 
 
 private fun fetchGroup(id: Int): Group?{
