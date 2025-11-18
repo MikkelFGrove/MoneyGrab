@@ -64,12 +64,11 @@ fun AddExpenseView(groupId: Int, addToExpense: (Group?) -> Unit, back: () -> Uni
             TextField(
                 value = amount,
                 onValueChange = { amount = it },
-                modifier = Modifier.weight(1f)
-                    .padding(end = 10.dp),
+                modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Amount") },
+                suffix = { Text("DKK", style = MaterialTheme.typography.bodyLarge)},
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number), singleLine = true
             )
-            Text("DKK", style = MaterialTheme.typography.bodyLarge)
         }
 
         TextField(
