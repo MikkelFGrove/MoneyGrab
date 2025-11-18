@@ -12,15 +12,16 @@ const db = new sqlite3.Database('MoneyGrab')
 
 db.serialize(() => {
     //Nulstiller tabellerne når serveren starter op
-    db.run(`DROP TABLE IF EXISTS groups`);
-    db.run(`DROP TABLE IF EXISTS users`);
-    db.run(`DROP TABLE IF EXISTS expenses`);
-    db.run(`DROP TABLE IF EXISTS transactions`);
-    db.run(`DROP TABLE IF EXISTS usersInGroup`);
-    db.run(`DROP TABLE IF EXISTS payersInExpense`);
-    db.run(`DROP TABLE IF EXISTS transactionsInExpense`);
+    db.run('DROP TABLE IF EXISTS groups');
+    db.run('DROP TABLE IF EXISTS users');
+    db.run('DROP TABLE IF EXISTS messages')
+    db.run('DROP TABLE IF EXISTS expenses');
+    db.run('DROP TABLE IF EXISTS transactions');
+    db.run('DROP TABLE IF EXISTS usersInGroup');
+    db.run('DROP TABLE IF EXISTS payersInExpense');
+    db.run('DROP TABLE IF EXISTS transactionsInExpense');
 
-    db.run(`PRAGMA foreign_keys= ON`);
+    db.run('PRAGMA foreign_keys= ON');
 
     //Opretter tabellerne
     db.run(`CREATE TABLE IF NOT EXISTS groups (
@@ -132,8 +133,8 @@ db.serialize(() => {
     `);
 
     db.run(`INSERT INTO transactions (sender, receiver, amount, creationTime, paymentTime, paid) VALUES
-        (2, 1, 666.67, datetime('now'), 'pending', 0),
-        (3, 1, 666.67, datetime('now'), 'pending', 0),
+        (2, 1, 666.67, datetime('now'), '0', 0),
+        (3, 1, 666.67, datetime('now'), '0', 0),
         (3, 2, 200.00, datetime('now'), datetime('now'), 1)
     `);
 
@@ -170,7 +171,7 @@ app.get('/groups/:id', (req, res) => {
         });
 });
 
-//Insert new group
+//Create new group
 app.post('/groups', (req, res) => {
     const { name, image} = req.body;
 
@@ -183,12 +184,58 @@ app.post('/groups', (req, res) => {
     );
 });
 
-// TODO: POST /expenses
+//Create new expense
+app.post('/expenses', (req, res) => {
+    const { owner, group, description, amount, payers } = req.body;
+
+    db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp)
+            VALUES (?,?,?,?, CURRENT_TIMESTAMP)`,
+        [owner, group, description, amount],
+    function(err) {
+        if(err) return res.status(500).json({err: err.message});
+
+        const expenseId = this.lastID;
+        const payerList = payers.length > 0 ? payers: [owner];
+
+        const sqlStatement = db.prepare('INSERT INTO payersInExpense (user, expense) VALUES (?, ?)');
+        payerList.forEach(user => sqlStatement.run(user, expenseId));
+        sqlStatement.finalize((err) => {
+            if(err) {
+                return res.status(500).json({error: err});
+            }
+
+        return res.status(200).json({expense_id: expenseId});
+        });
+    });
+});
+
 
 //TODO: POST /transactions
+app.post('/transactions', (req, res) =>{
+    const { sender, receiver, amount, paid = 0, expenseId } = req.body;
+    const paymentTimeValue = paid === 1 ? 'CURRENT_TIMESTAMP' : '0';
+
+    const sqlStatement = `INSERT INTO transactions (sender, receiver, amount, creationTime, paymentTime, paid)
+    VALUES (?, ?, ?, CURRENT_TIMESTAMP, ${paymentTimeValue}, ?)`;
+
+    db.run(sqlStatement, 
+        [sender, receiver, amount, paid],
+    function(err) {
+        if (err) return res.status(500).json({error: err.message});
+
+        const transactionId = this.lastID;
+
+        const sqlStmt = db.prepare('INSERT INTO transactionsInExpense (expense, "transaction") VALUES (?, ?)');
+        expenseId.forEach(expense => sqlStmt.run(expense, transactionId));
+        sqlStmt.finalize(finalerror => {
+            if(finalerror) return res.status(500).json({error: finalerror.message});
+            return res.status(200).json({ transaction_id: transactionId});
+        });
+    });
+});
 
 
-//Insert new user
+//Create new user
 app.post('/users', async (req, res) => {
     try {
             const { phoneNumber, password, name, image } = req.body;
@@ -216,7 +263,7 @@ app.post('/login', async (req, res) => {
     try {
         const {phoneNumber, password } = req.body;
     
-        db.get('SELECT * FROM users WHERE phoneNumber = ?',
+            db.get('SELECT phoneNumber, password, name, image FROM users WHERE phoneNumber = ?',
             [phoneNumber],
             async (err, user) => {
                 if (err) return res.status(500).json({err: err.message});
@@ -225,8 +272,8 @@ app.post('/login', async (req, res) => {
                 const isMatch = await bcrypt.compare(password, user.password);
                 if(!isMatch) return res.status(401).json({err: 'Wrong password'});
 
-                const {id, name, image } = user;
-                return res.json({ id, phoneNumber, name, image});
+                const {phoneNumber, name, image } = user;
+                return res.json({phoneNumber, name, image});
             }
         );
     } catch (e) {
@@ -263,7 +310,10 @@ app.get('/users/:id/expenses', (req, res) => {
 // Get groups on a user
 app.get('/users/:id/groups', (req, res) => {
     const { id } = req.params;
-    db.all('SELECT groups.id, groups.name, groups.image FROM groups groups INNER JOIN usersInGroup uIG on groups.id = uIG."group" WHERE uIG.user = ?',
+    db.all(`SELECT groups.id, groups.name, groups.image 
+            FROM groups 
+            INNER JOIN usersInGroup uIG on groups.id = uIG."group" 
+            WHERE uIG.user = ?`,
     [id],
     (err, rows) => {
         if(err) return res.status(500).json({err: err.message});
@@ -276,9 +326,10 @@ app.get('/users/:id/groups', (req, res) => {
 app.get('/groups/:id/expenses', (req, res) => {
   const { id } = req.params;
   db.all(
-    `SELECT e.id, e.owner, e."group", e.description, e.amount, e.timeStamp
-     FROM expenses e
-     WHERE e."group" = ?`,
+    `SELECT expense.id, expense.owner, expense."group", expense.description, expense.amount, expense.timeStamp
+     FROM expenses expense
+     INNER JOIN payersInExpense pIE on expense.id = pIE.expense
+     WHERE expense."group" = ?`,
     [id],
     (err, rows) => {
       if (err) return res.status(500).json({ err: err.message });
@@ -286,6 +337,24 @@ app.get('/groups/:id/expenses', (req, res) => {
       res.json(rows);
     }
   );
+});
+
+//Get nonpaid transactions on a group
+app.get('/groups/:id/outstandingPayments', (req, res) => {
+    const { id } = req.params;
+    db.all(
+        `SELECT * from transactions WHERE paid = 0
+        AND id IN (
+            SELECT "transaction" FROM transactionsInExpense
+            JOIN expenses e on e.id = transactionsInExpense.expense
+            WHERE e."group" = ?
+        )`, [id],
+        (err, rows) => {
+            if(err) return res.status(500).json({error: err.message});
+            if(!rows) return res.status(404).json({error: 'No nonpaid transactions found'});
+            res.json(rows);
+        }
+    );
 });
 
 app.listen(3000, () => console.log('The server is running on http://localhost:3000'));
