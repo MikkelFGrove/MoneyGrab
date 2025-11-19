@@ -1,6 +1,7 @@
 // ChatScreen.kt
 package com.example.moneygrab.views
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,24 +30,29 @@ import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
 import com.example.authentication.CurrentUser
 
-data class MoneyRequest(val text: String, val isMine: Boolean)
 
 class ChatViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var user: User? = null
-    var group: Group = Group(
+    var group: Group by mutableStateOf(Group(
         id = -1,
         name = "",
-        users = emptySet<User>(),
-        expenses = emptyList<Expense>() as MutableList<Expense>,
+        users = emptySet(),
+        expenses = mutableListOf(),
         tabClosed = false,
-        messages = emptyList<Message>()
-    )
+        messages = mutableListOf()
+    ))
     var amountOwed = mutableFloatStateOf(Float.NaN)
     var messages = mutableStateListOf<Message>()
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
     var showCloseDialog = mutableStateOf(false)
+
+    fun setUser(context: Context) {
+        CurrentUser(context).getUser()?.let {
+            user = it
+        }
+    }
 
     fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
@@ -58,14 +64,29 @@ class ChatViewModel() : ViewModel() {
                 null
             }
 
-            if (response?.code() != 200) {
+            if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "The phone number or password is incorrect"
                 errorHappened.value = true
             } else {
                 response.body()?.let {
+                    println("Group: ${it}")
                     group = it
                 }
             }
+
+            /*val expenses = try {
+                api.getExpensesInGroup(group.id)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+
+            expenses?.let { e ->
+                println("Expenses: ${e}")
+                group.expenses = e
+            }*/
+
+            println("Number of expenses: ${group.expenses}")
         }
     }
 
@@ -101,8 +122,7 @@ class ChatViewModel() : ViewModel() {
 }
 
 @Composable
-fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDebt: () -> Unit) {
-
+fun TopBar(groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDebt: () -> Unit) {
     var color: Color
     if (calculatedSum < 0){
         color = Color.Red
@@ -165,13 +185,13 @@ fun TopBar(groupName: String, calculatedSum: Double, onBack: () -> Unit, onPayDe
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
     //This needs to be implemented again when login authcontext is up and running
-     val bubbleColor = if (moneyRequest.lender.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
+     val bubbleColor = if (moneyRequest.owner.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
         colors.primary
     } else {
         colors.primary.copy(alpha = 0.2f)
     }
 
-    val textColor = if (moneyRequest.lender.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
+    val textColor = if (moneyRequest.owner.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
         Color.White
     } else {
         Color.Black
@@ -180,7 +200,7 @@ fun Bubbles(moneyRequest: Expense) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp, horizontal = 10.dp),
-        horizontalArrangement = if (moneyRequest.lender.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (moneyRequest.owner.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) Arrangement.End else Arrangement.Start
     ) {
         Surface(
             color = bubbleColor,
@@ -231,10 +251,13 @@ fun InputBar(addExpense: (Group) -> Unit, group: Group) {
 fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit) {
     val chatViewModel: ChatViewModel = viewModel()
     var showCloseDialog by chatViewModel.showCloseDialog
+    var amountOwed by chatViewModel.amountOwed
     var groupName = chatViewModel.group.name
     var expenses = chatViewModel.group.expenses
+    var context = LocalContext.current
 
     LaunchedEffect(groupId) {
+        chatViewModel.setUser(context)
         chatViewModel.fetchGroupData(groupId)
         chatViewModel.fetchAmountOwed()
     }
@@ -242,8 +265,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
             groupName = groupName,
-            //Change to API-call 😁
-            calculatedSum = 0.00,
+            calculatedSum = amountOwed,
             onBack = onBack,
             onPayDebt = {
                 showCloseDialog = true
@@ -262,30 +284,15 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
         if (showCloseDialog) {
             DialogCloseTheTab(
                 onDismissRequest = { showCloseDialog = false },
-                onConfirmation = { onConfirmation },
+                onConfirmation = {
+                    showCloseDialog = false
+                    chatViewModel.closeTab()
+                    onConfirmation
+                },
                 group = chatViewModel.group
             )
         }
     }
-}
-
-private fun getSum(currentUser: User?, group1: Group?): Double{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    return 0.0
-}
-private fun fetchGroup(id: Int): Group?{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    return null
 }
 
 @Composable
@@ -346,5 +353,4 @@ fun ChatScreenPreview() {
         ChatScreen(groupId = 1, addExpense = {println("Norway")}
         )
     }
-}
-*/
+}*/

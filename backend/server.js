@@ -27,7 +27,8 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    image BLOB
+    tabClosed INTEGER NOT NULL,
+    image TEXT
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -95,17 +96,18 @@ db.serialize(() => {
 
 
     // Dummy data for tabellerne (AI genereret og ikke verificeret)
-     db.run(`INSERT INTO groups (name) VALUES
-        ('Sommerhus-turen'),
-        ('Roomies'),
-        ('Arbejdsholdet')
+     db.run(`INSERT INTO groups (name, tabClosed) VALUES
+        ('Sommerhus-turen', 0),
+        ('Roomies', 0),
+        ('Arbejdsholdet', 0)
     `);
 
     db.run(`INSERT INTO users (phoneNumber, password, name) VALUES
         ('12345678', 'pass1', 'Anna'),
         ('87654321', 'pass2', 'Mikkel'),
         ('11223344', 'pass3', 'Sara'),
-        ('44332211', 'pass4', 'Jonas')
+        ('44332211', 'pass4', 'Jonas'),
+        ('77777777', '$2b$05$BoR0ZZHd5L9fpB0A9nfIEOvKBlnPu4mVnOopxgZY.3B3QrgRoUfy2', 'John Doe')
     `);
 
     db.run(`INSERT INTO usersInGroup (user, "group", timeStamp) VALUES
@@ -113,7 +115,10 @@ db.serialize(() => {
         (2, 1, datetime('now')),
         (3, 1, datetime('now')),
         (4, 2, datetime('now')),
-        (1, 2, datetime('now'))
+        (1, 2, datetime('now')),
+        (5, 1, datetime('now')),
+        (5, 2, datetime('now')),
+        (5, 3, datetime('now'))
     `);
 
     db.run(`INSERT INTO messages (sender, "group", content, timeStamp) VALUES
@@ -124,11 +129,11 @@ db.serialize(() => {
 
     db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp) VALUES
         (1, 1, 'Leje af sommerhus', 2000.00, datetime('now')),
-        (2, 1, 'Mad og drikke', 600.00, datetime('now'))
+        (5, 1, 'Mad og drikke', 600.00, datetime('now'))
     `);
 
     db.run(`INSERT INTO payersInExpense (user, expense) VALUES
-        (1, 1),
+        (1, 2),
         (2, 2)
     `);
 
@@ -168,6 +173,7 @@ app.get('/groups/:id', (req, res) => {
         (err, row) => {
             if(err) return res.status(500).json({error: err.message});
             if(!row) return res.status(404).json({error: 'group not found'});
+            row.tabClosed = row.tabClose == 1;
             res.json(row);
         });
 });
@@ -183,6 +189,17 @@ app.post('/groups', (req, res) => {
             return res.json({ group_id: this.lastID });
         }
     );
+});
+
+app.get('/expenses/:id', (req, res) => {
+   const { id } = req.params;
+       db.get('SELECT * FROM expenses WHERE id = ?',
+           [id],
+           (err, row) => {
+               if(err) return res.status(500).json({error: err.message});
+               if(!row) return res.status(404).json({err: 'Expense not found'});
+               res.json(row);
+           });
 });
 
 //Create new expense (This assumes that the payers is an array when being send to the backend)
@@ -264,7 +281,7 @@ app.post('/login', async (req, res) => {
     try {
         const {phoneNumber, password } = req.body;
     
-            db.get('SELECT phoneNumber, password, name, image FROM users WHERE phoneNumber = ?',
+            db.get('SELECT id, phoneNumber, password, name, image FROM users WHERE phoneNumber = ?',
             [phoneNumber],
             async (err, user) => {
                 if (err) return res.status(500).json({err: err.message});
@@ -273,8 +290,8 @@ app.post('/login', async (req, res) => {
                 const isMatch = await bcrypt.compare(password, user.password);
                 if(!isMatch) return res.status(401).json({err: 'Wrong password'});
 
-                const {phoneNumber, name, image } = user;
-                return res.json({phoneNumber, name, image});
+                const {id, phoneNumber, name, image } = user;
+                return res.json({id, phoneNumber, name, image});
             }
         );
     } catch (e) {

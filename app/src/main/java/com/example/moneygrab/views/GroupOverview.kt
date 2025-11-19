@@ -45,9 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
-import com.example.debtcalculator.data.User
 import com.example.authentication.CurrentUser
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
@@ -57,81 +55,18 @@ import kotlinx.coroutines.launch
 @Immutable
 data class FrontendGroup(val id: Int, val name: String)
 
-fun fetchGroups(user: User?): List<Group>{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    val userA = User(id = 1, phoneNumber = "11111111", name = "Alice", image = null)
-    val userB = User(id = 1, phoneNumber = "22222222", name = "Bob", image = null)
-    val userC = User(id = 1, phoneNumber = "33333333", name = "Charlie", image = null)
-    val userD = User(id = 1, phoneNumber = "44444444", name = "Diana", image = null)
-
-    val expense1 = Expense(
-        amount = 120f,
-        description = "Dinner",
-        lender = userA,
-        payers = arrayOf(userA, userB)
-    )
-
-    val expense2 = Expense(
-        amount = 90f,
-        description = "Cinema",
-        lender = userC,
-        payers = arrayOf(userC, userD)
-    )
-
-    val expense3 = Expense(
-        amount = 300f,
-        description = "Weekend trip",
-        lender = userB,
-        payers = arrayOf(userA, userB, userC, userD)
-    )
-
-    val group1 = Group(
-        name = "Friends",
-        users = setOf(userA, userB),
-        expenses = mutableListOf(expense1),
-        messages = emptyList(), // Empty as requested
-        id = 1,
-        tabClosed = false
-    )
-
-    val group2 = Group(
-        name = "Family",
-        users = setOf(userC, userD),
-        expenses = mutableListOf(expense2),
-        messages = emptyList(),
-        id = 2,
-        tabClosed = false
-    )
-
-    val group3 = Group(
-        name = "Work Trip",
-        users = setOf(userA, userB, userC, userD),
-        expenses = mutableListOf(expense3),
-        messages = emptyList(),
-        id = 3,
-        tabClosed = false
-    )
-
-    return listOf(group1, group2, group3)
-}
-
 class GroupPageViewModel() : ViewModel(){
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var groups = mutableStateListOf<Group>()
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
 
-    fun fetchGroups(userPhone: Int) {
+    fun fetchGroups(userId: Int) {
         println("outer1")
         viewModelScope.launch {
             println("outer2")
             val response = try {
-                api.getGroups(userPhone)
+                api.getGroups(userId)
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 println(errorMessage)
@@ -159,12 +94,16 @@ class GroupPageViewModel() : ViewModel(){
 fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }
+    var user = currentUser.getUser()
 
     val groupPageViewModel: GroupPageViewModel = viewModel()
 
 
-    LaunchedEffect(1){
-        groupPageViewModel.fetchGroups(1)
+    LaunchedEffect(user){
+        user?.let {
+            println("User ID: ${it.id}")
+            groupPageViewModel.fetchGroups(it.id)
+        }
     }
     val groups: List<Group> = groupPageViewModel.groups
 

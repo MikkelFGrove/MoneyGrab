@@ -30,7 +30,6 @@ import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupPage
 import com.example.moneygrab.views.ProfilePage
 
-import com.example.moneygrab.views.TestData
 
 
 
@@ -49,7 +48,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavManager() {
-    val group = TestData()
     val navController = rememberNavController()
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }
@@ -109,7 +107,7 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     AddExpenseView(
                         groupId = groupId,
-                        addToExpense = { Group -> navController.navigate("addToExpense/${Group?.id}") },
+                        addToExpense = { expense -> navController.navigate("addToExpense/${expense?.id}") },
                         back = { navController.popBackStack() }
                     )
                 }
@@ -123,13 +121,13 @@ fun NavManager() {
                 }
 
                 composable(
-                    "addToExpense/{groupId}", arguments = listOf(
-                    navArgument("groupId") { type = NavType.IntType }
+                    "addToExpense/{expenseId}", arguments = listOf(
+                    navArgument("expenseId") { type = NavType.IntType }
                 )) { backStackEntry ->
-                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
+                    val expenseId = backStackEntry.arguments?.getInt("expenseId") ?: 1
                     AddPayersView(
-                        groupId = groupId,
-                        onAddExpense = { Group -> navController.navigate("groupChat/${Group.id}") },
+                        expenseId = expenseId,
+                        onAddExpense = { group -> navController.navigate("groupChat/${group.id}") },
                         onBack = { navController.popBackStack() }
                     )
                 }

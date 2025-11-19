@@ -12,9 +12,9 @@ fun main() {
     val userJohn = User(0, "12345678", "John Bandit", null)
     val userSonny = User(0, "87654321", "Sonny Riskiks", null)
 
-    val banankage = Expense(100f, "Banankage", userJohn, arrayOf(userJoe, userSonny, userJohn))
-    val riskiks = Expense(10.95f, "Riskiks", userSonny, arrayOf(userJoe, userJohn, userSonny))
-    val skraldesække = Expense(250f, "Skraldesække", userJoe, arrayOf(userJohn, userJoe, userSonny))
+    //val banankage = Expense(100f, "Banankage", userJohn, arrayOf(userJoe, userSonny, userJohn))
+    //val riskiks = Expense(10.95f, "Riskiks", userSonny, arrayOf(userJoe, userJohn, userSonny))
+    //val skraldesække = Expense(250f, "Skraldesække", userJoe, arrayOf(userJohn, userJoe, userSonny))
 
 /*    val group = Group(
         id = 1,

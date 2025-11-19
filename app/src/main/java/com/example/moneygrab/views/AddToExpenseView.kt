@@ -25,9 +25,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -36,12 +39,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.Message
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.R
 import com.example.authentication.CurrentUser
+import com.example.moneygrab.APIEndpoints
+import com.example.moneygrab.RetrofitClient
+import kotlinx.coroutines.launch
+import kotlin.math.exp
 import kotlin.time.TimeSource
 
 /*
@@ -54,47 +64,74 @@ fun View() {
     }
 }*/
 
+class AddUsersToExpenseViewModel(): ViewModel() {
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    var group by mutableStateOf<Group?>(null)
+    var selectedUsers = mutableStateListOf<User>()
+    var expense by mutableStateOf<Expense?>(null)
 
-@Composable
-fun TestData(): Group {
-    val user1 = User(-1, "13241234","test1", null)
-    val user2 = User(-1, "23412341","test2", null)
-    val user3 = User(-1, "34123412","test3", null)
+    fun fetchExpense(expenseId: Int) {
+        viewModelScope.launch {
+            val response = try {
+                api.getExpense(expenseId)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
 
-    val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
-    val mark = TimeSource.Monotonic.markNow()
-    val messages = Message(user1, "test", mark)
+            response?.body()?.let {
+                println(it)
+                expense = it
+            }
+        }
+    }
 
-    val group = Group(
-        name = "Weekend trip",
-        users = setOf(user1, user2, user3),
-        expenses = mutableListOf(expense),
-        messages = listOf(messages),
-        id = 1,
-        tabClosed = false
-    )
-    return group
+    fun fetchGroup() {
+        viewModelScope.launch {
+            expense?.let { it ->
+                val response = try {
+                    api.getGroup(it.group)
+                } catch (e: Exception) {
+                    null
+                }
+
+                response?.body()?.let { it ->
+                    group = it
+                }
+            }
+        }
+    }
+
+    fun updateExpense() {
+        viewModelScope.launch {
+            expense?.let {
+                it.payers = selectedUsers
+                try {
+                    api.updateExpense(it.id, it)
+                } catch (e: Exception) {
+                    println(e.message)
+                }
+
+            }
+        }
+    }
 }
-
-
-private fun fetchGroup(id: Int): Group?{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    return null
-}
 @Composable
-fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Group) -> Unit = {}, onBack: () -> Unit = {}) {
+fun AddPayersView(modifier: Modifier = Modifier, expenseId: Int, onAddExpense: (Group) -> Unit = {}, onBack: () -> Unit = {}) {
+    val addUsersToExpenseViewModel: AddUsersToExpenseViewModel = viewModel()
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }.getUser()
-    val group = fetchGroup(groupId)?: fetchGroups(currentUser).first()
+    val group = addUsersToExpenseViewModel.group
+    val expense = addUsersToExpenseViewModel.expense
+
+    var selectedUsers = addUsersToExpenseViewModel.selectedUsers
+
     val isDropDownExpanded = remember { mutableStateOf(false) }
-    val users = group?.users?.toList()
-    val selectedUsers = remember { mutableStateListOf<User>().apply {addAll(group?.users ?: mutableStateListOf<User>())}}
-    val expense = group?.expenses[group.expenses.size-1]
+
+    LaunchedEffect(expenseId) {
+        addUsersToExpenseViewModel.fetchExpense(expenseId)
+        addUsersToExpenseViewModel.fetchGroup()
+    }
 
     Column(
         modifier = modifier
@@ -164,7 +201,7 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
                 onDismissRequest = { isDropDownExpanded.value = false },
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface)
             ) {
-                users?.forEach { user ->
+                group?.users?.forEach { user ->
                     val isSelected = user in selectedUsers
                     DropdownMenuItem(
                         text = {
@@ -196,19 +233,12 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
 
         Button(
             onClick = {
-                val updatedExpense = expense?: Expense(
-                    amount = 1.toFloat(),
-                    description = "TODO()",
-                    lender = User(-1, "123123", "TODO()", null),
-                    payers = emptyArray()
-                ).copy(payers = selectedUsers.toTypedArray())
-                val updatedGroup = group?.copy(
-                    expenses = group.expenses.apply {
-                        this[this.lastIndex] = updatedExpense
+                currentUser?.let {
+                    addUsersToExpenseViewModel.updateExpense()
+                    group?.let {
+                        onAddExpense(it)
                     }
-                )
-                println(updatedGroup)
-                onAddExpense(group)
+                }
             },
             modifier = Modifier.padding(horizontal = 14.dp).height(64.dp),
             shape = RoundedCornerShape(12.dp),
@@ -223,33 +253,12 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
     }
 
 }
+
+
 @Preview(showBackground = true)
 @Composable
 fun AddToExpenseView() {
-    val group = testData()
-
     Scaffold (modifier = Modifier.fillMaxSize()){ innerPadding ->
-        AddPayersView(modifier = Modifier.padding(innerPadding), groupId = 1)
+        AddPayersView(modifier = Modifier.padding(innerPadding), expenseId = 1)
     }
-}
-
-@Composable
-fun testData(): Group {
-    val user1 = User(-1, "13241234","test1", null)
-    val user2 = User(-1, "23412341","test2", null)
-    val user3 = User(-1, "34123412","test3", null)
-
-    val expense = Expense(12.35f, "Bare en test", user1, payers = arrayOf(user1, user2, user3))
-    val mark = TimeSource.Monotonic.markNow()
-    val messages = Message(user1, "test", mark)
-
-    val group = Group(
-        name = "Weekend trip",
-        users = setOf(user1, user2, user3),
-        expenses = mutableListOf(expense),
-        messages = listOf(messages),
-        id = 1,
-        tabClosed = false
-    )
-    return group
 }
