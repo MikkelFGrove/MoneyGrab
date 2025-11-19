@@ -103,9 +103,10 @@ fun NavManager() {
             modifier = Modifier.padding(innerPadding)
         ) {
                 composable("signup") {
-                    SignUpScreen(onSignUpSuccess = {
-                        navController.navigate("ProfilePage")
-                    })
+                    SignUpScreen(
+                        onSignUpSuccess = { navController.navigate("ProfilePage") },
+                        onBackLogin = { navController.navigate("login")}
+                    )
                 }
 
                 composable("login") {
@@ -134,7 +135,7 @@ fun NavManager() {
                     ChatScreen(
                         groupID = groupId,
                         addExpense = { Group -> navController.navigate("addExpense/${Group.id}") },
-                        onBack = { navController.navigateUp() },
+                        onBack = { navController.navigate("groupPage") },
                         onConfirmation = { Group ->
                             navController.navigate("confirmPayment/${Group.id}")
                             println("Configrm")
@@ -154,13 +155,13 @@ fun NavManager() {
                     AddExpenseView(
                         groupId = groupId,
                         addToExpense = { Group -> navController.navigate("addToExpense/${Group?.id}") },
-                        back = { navController.popBackStack() }
+                        back = { navController.navigate("groupChat/$groupId") }
                     )
                 }
 
                 composable("ProfilePage") {
                     ProfilePage(
-                        onBackClick = { navController.popBackStack() },
+                        onBackClick = { navController.navigate("groupPage") },
                         onLogoutClick = { navController.navigate("login") }
                         //onEditClick = { },
                     )
@@ -174,14 +175,14 @@ fun NavManager() {
                     AddPayersView(
                         groupId = groupId,
                         onAddExpense = { Group -> navController.navigate("groupChat/${Group.id}") },
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.navigate("addExpense/$groupId") }
                     )
                 }
 
                 composable("groupCreation") {
                     GroupCreationView(
                         onCreateGroupNavigation = { navController.navigate("groupPage") },
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.navigate("groupPage") }
                     )
                 }
 
@@ -192,7 +193,7 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     ConfirmPaymentPage(
                         groupId = groupId,
-                        onBack = { navController.popBackStack() })
+                        onBack = { navController.navigate("groupChat/$groupId") })
                 }
             }
         }
