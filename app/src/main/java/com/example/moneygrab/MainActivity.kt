@@ -148,7 +148,10 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     ConfirmPaymentPage(
                         groupId = groupId,
-                        onBack = { navController.popBackStack() })
+                        onBack = { navController.popBackStack() },
+                        navigation = { group ->
+                            navController.navigate("groupChat/${group.id}")
+                        })
                 }
 
             }

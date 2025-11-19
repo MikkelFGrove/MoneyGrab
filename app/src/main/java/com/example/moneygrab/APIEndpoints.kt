@@ -13,6 +13,8 @@ data class LoginRequest(
     val password: String
 )
 interface APIEndpoints {
+    @POST("user/{id}/group/{groupId}")
+    suspend fun payTransaction(@Path("id") userId: String, @Path("groupId") groupId: Int): Response<Int>
     @GET("users/search/{search}")
     suspend fun getSuggestedUsers(@Path("search") search: String): Response<List<User>>
 
