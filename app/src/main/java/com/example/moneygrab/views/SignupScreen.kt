@@ -3,6 +3,8 @@ package com.example.moneygrab.views
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -10,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,11 +25,13 @@ import com.example.moneygrab.APIEndpoints
 import kotlinx.coroutines.launch
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.LoginRequest
+import com.example.moneygrab.R
 
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    onSignUpSuccess: () -> Unit
+    onSignUpSuccess: () -> Unit,
+    onBackLogin: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -40,82 +45,94 @@ fun SignUpScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp)
     ) {
-        Text(
-            text = "Sign up",
-            fontSize = 26.sp,
-            modifier = Modifier.padding(bottom = 12.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Name") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = phone,
-            onValueChange = { phone = it },
-            label = { Text("Phone number") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                scope.launch {
-                    try {
-                        val user = signUpUser(name, email, phone, password)
-                        currentUser.saveUser(user)
-                        onSignUpSuccess()
-                    } catch (e: Exception) {
-                        errorMessage = "Buhu"
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) {
-            Text("Create account", fontSize = 18.sp)
-        }
-
-        errorMessage?.let {
-            Spacer(Modifier.height(12.dp))
-            Text(it, color = Color.Red)
+        IconButton(onClick = onBackLogin) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_arrow_back),
+                contentDescription = "Back"
+            )
         }
     }
-}
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Sign up",
+                fontSize = 26.sp,
+                modifier = Modifier.padding(bottom = 12.dp))
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Phone number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        try {
+                            val user = signUpUser(name, email, phone, password)
+                            currentUser.saveUser(user)
+                            onSignUpSuccess()
+                        } catch (e: Exception) {
+                            errorMessage = "Buhu"
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text("Create account", fontSize = 18.sp)
+            }
+
+            errorMessage?.let {
+                Spacer(Modifier.height(12.dp))
+                Text(it, color = Color.Red)
+            }
+        }
+    }
 
 suspend fun signUpUser(name: String, email: String, phone: String, password: String): User {
     val api = RetrofitClient().api
