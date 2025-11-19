@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.CurrentUser
 import com.example.debtcalculator.data.User
@@ -53,6 +54,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit, onSig
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Login",
+            fontSize = 26.sp,
             modifier = Modifier
                 .padding(bottom = 12.dp))
 
