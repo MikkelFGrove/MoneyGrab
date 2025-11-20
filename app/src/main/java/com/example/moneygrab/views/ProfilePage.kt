@@ -1,14 +1,18 @@
 package com.example.moneygrab.views
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,24 +20,71 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.authentication.CurrentUser
+import com.example.debtcalculator.data.User
+import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
+import com.example.moneygrab.RetrofitClient
+import kotlinx.coroutines.launch
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.components.openNotificationSettings
 
+class ProfilePageViewModel() : ViewModel() {
+    var editMode = mutableStateOf(false)
+
+    var currentUser = mutableStateOf<User?>(null)
+    var name = mutableStateOf("")
+    var phoneNumber = mutableStateOf("")
+    var errorMessage = mutableStateOf("")
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    private var userId = mutableStateOf(-1)
+
+    fun getUser(context: Context) {
+        currentUser.value = CurrentUser(context).getUser()
+        name.value = currentUser.value?.name.toString()
+        phoneNumber.value = currentUser.value?.phoneNumber.toString()
+        userId.value = currentUser.value?.id?: -1
+    }
+
+    fun saveUser(context: Context) {
+        viewModelScope.launch {
+            val response = try {
+                api.updateUser(APIEndpoints.UpdateUser(userId.value, phoneNumber.value, name.value, ""))
+            } catch (e: Exception) {
+                errorMessage.value = "An error has occurred"
+                null
+            }
+
+            if (response?.code() != 200) {
+                errorMessage.value = "The phone number or password is incorrect"
+            } else {
+                response.body()?.let {
+                    CurrentUser(context).saveUser(it)
+                    editMode.value = true
+                }
+            }
+        }
+    }
+
+
+}
 
 @Composable
 fun ProfilePage(
     onBackClick: () -> Unit = {},
     onEditClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
+
 ) {
     val context = LocalContext.current
-    val currentUser = remember { CurrentUser(context) }
-    val fullName = currentUser.getUser()?.name.toString()
-    val phoneNumber = currentUser.getUser()?.phoneNumber.toString()
+    val profilePageViewModel: ProfilePageViewModel = viewModel()
+    profilePageViewModel.getUser(context)
 
 
     Column(
@@ -53,7 +104,9 @@ fun ProfilePage(
                     contentDescription = "Back"
                 )
             }
-            IconButton(onClick = onEditClick) {
+            IconButton(onClick = {
+                profilePageViewModel.editMode.value = !profilePageViewModel.editMode.value
+            }) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_edit),
                     contentDescription = "Edit"
@@ -81,23 +134,6 @@ fun ProfilePage(
                     .clip(CircleShape)
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Takes parameters fullName, phoneNumber
-        Text(
-            text = fullName,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        Text(
-            text = phoneNumber,
-            fontSize = 20.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            color = Color.Gray
-        )
-
         Spacer(modifier = Modifier.height(24.dp))
 
         Row(
@@ -120,17 +156,73 @@ fun ProfilePage(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
         }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Takes parameters fullName, phoneNumber
+        if (profilePageViewModel.editMode.value) {
+            OutlinedTextField(
+                value = profilePageViewModel.name.value,
+                onValueChange = { profilePageViewModel.name.value = it },
+                label = { Text("Phone number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = profilePageViewModel.phoneNumber.value,
+                onValueChange = { profilePageViewModel.phoneNumber.value = it },
+                label = { Text("Phone number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            Text(
+                text = profilePageViewModel.name.value,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Text(
+                text = profilePageViewModel.phoneNumber.value,
+                fontSize = 20.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                color = Color.Gray
+            )
+        }
+
+
 
         Spacer(modifier = Modifier.weight(1f))
-
+        if (profilePageViewModel.editMode.value){
+            Button(
+                onClick = {
+                    profilePageViewModel.saveUser(context)
+                    profilePageViewModel.editMode.value = !profilePageViewModel.editMode.value
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary, // Maybe add the purple button back?
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Save User",
+                    fontSize = 20.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         // Logout button
         Button(
             onClick = {
-                currentUser.clear()
+                CurrentUser(context = context).clear()
                 println("What")
                 onLogoutClick()
-                      },
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
@@ -141,8 +233,8 @@ fun ProfilePage(
         ) {
             Text(
                 text = "Log Out",
-                fontSize = 20.sp)
+                fontSize = 20.sp
+            )
         }
     }
-
 }
