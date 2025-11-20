@@ -62,7 +62,6 @@ interface APIEndpoints {
     @POST("users")
     suspend fun updateUser(@Body body: UpdateUser): Response<com.example.debtcalculator.data.User>
 
-    data class LoginData (
     @GET("/groups/{groupId}/expenses")
     suspend fun getExpensesInGroup(@Path("groupId") groupId: Int): Response<MutableList<ChatExpense>>
 

@@ -134,28 +134,6 @@ fun ProfilePage(
                     .clip(CircleShape)
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Takes parameters fullName, phoneNumber
-        if (profilePageViewModel.editMode.value) {
-            OutlinedTextField(
-                value = profilePageViewModel.name.value,
-                onValueChange = { profilePageViewModel.name.value = it },
-                label = { Text("Phone number") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = profilePageViewModel.phoneNumber.value,
-                onValueChange = { profilePageViewModel.phoneNumber.value = it },
-                label = { Text("Phone number") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
-
         Spacer(modifier = Modifier.height(24.dp))
 
         Row(
@@ -178,8 +156,26 @@ fun ProfilePage(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
         }
+        Spacer(modifier = Modifier.height(24.dp))
 
-
+        // Takes parameters fullName, phoneNumber
+        if (profilePageViewModel.editMode.value) {
+            OutlinedTextField(
+                value = profilePageViewModel.name.value,
+                onValueChange = { profilePageViewModel.name.value = it },
+                label = { Text("Phone number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = profilePageViewModel.phoneNumber.value,
+                onValueChange = { profilePageViewModel.phoneNumber.value = it },
+                label = { Text("Phone number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.fillMaxWidth()
+            )
         } else {
             Text(
                 text = profilePageViewModel.name.value,
