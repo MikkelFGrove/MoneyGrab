@@ -1,6 +1,7 @@
 package com.example.moneygrab.views
 
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -61,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.authentication.CurrentUser
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
@@ -89,6 +91,7 @@ class GroupViewModel() : ViewModel() {
             val response = try {
                 api.getSuggestedUsers(searchString)
             } catch (e: Exception) {
+                println(e.message)
                 null
             }
 
@@ -96,19 +99,21 @@ class GroupViewModel() : ViewModel() {
                 response.body()?.let {
                     searchResult.clear()
                     searchResult.addAll(it)
+                    searchResult.removeAll(chosenUsers)
                 }
             }
         }
     }
 
-    fun createGroup(navigation: () -> Unit) {
+    fun createGroup(navigation: () -> Unit, user: User) {
         viewModelScope.launch {
             var response = try {
                 api.createGroup(
                     APIEndpoints.GroupData(
                         groupName.value,
                         description.value,
-                        chosenUsers
+                        chosenUsers,
+                        user.id
                     )
                 )
             } catch (e: Exception) {
@@ -138,6 +143,8 @@ fun GroupCreationView(
     var errorCreatingGroup by groupViewModel.errorCreatingGroup
     var groupName by groupViewModel.groupName
     var errorMessage by groupViewModel.errorMessage
+    var context = LocalContext.current
+    var user = CurrentUser(context).getUser()
 
     Column(
         modifier = modifier
@@ -199,12 +206,14 @@ fun GroupCreationView(
             Spacer(modifier = Modifier.height(6.dp))
         }
 
-        CreateButton(groupViewModel, onCreateGroupNavigation)
+        user?.let {
+            CreateButton(groupViewModel, onCreateGroupNavigation, it)
+        }
     }
 }
 
 @Composable
-fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
+fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit, user: User) {
     Card(
         modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
@@ -212,7 +221,7 @@ fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
     ) {
         Button (
             onClick = {
-                groupViewModel.createGroup(onClick)
+                groupViewModel.createGroup(onClick, user)
             },
             shape = MaterialTheme.shapes.small,
         ) {
@@ -252,7 +261,7 @@ fun ImageButton(groupViewModel: GroupViewModel) {
     Button (
         modifier = Modifier
             .fillMaxWidth(0.85f)
-            .height(200.dp),
+            .height(100.dp),
         contentPadding = PaddingValues(0.dp, 0.dp),
         colors = ButtonColors(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, Color.Transparent, Color.Transparent),
         shape = MaterialTheme.shapes.large,
@@ -379,7 +388,7 @@ fun AccountSearchBar(groupViewModel: GroupViewModel) {
                 onDismissRequest = { expanded = false },
                 properties = PopupProperties(focusable = false),
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
+                    .fillMaxWidth(0.75f)
                     .height(300.dp)
             ) {
                 searchResult.forEach { user ->

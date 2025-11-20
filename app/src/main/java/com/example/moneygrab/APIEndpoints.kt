@@ -25,7 +25,7 @@ interface APIEndpoints {
     suspend fun getSuggestedUsers(@Path("search") search: String): Response<List<User>>
 
     @POST("groups")
-    suspend fun createGroup(@Body body: GroupData): Response<Int>
+    suspend fun createGroup(@Body body: GroupData): Response<GroupId>
 
     @GET("/users/{id}/groups")
     suspend fun getGroups(@Path("id") id: Int): Response<List<Group>>
@@ -76,7 +76,8 @@ interface APIEndpoints {
     data class GroupData(
         val name: String,
         val description: String,
-        val users: List<User>
+        val users: List<User>,
+        val owner: Int
     )
 
     data class SignupData(
@@ -103,5 +104,9 @@ interface APIEndpoints {
 
     data class OwedAmount(
         var amount: Float
+    )
+
+    data class GroupId(
+        var id: Int
     )
 }

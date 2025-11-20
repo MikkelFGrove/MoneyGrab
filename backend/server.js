@@ -115,7 +115,8 @@ db.serialize(() => {
         ('87654321', 'pass2', 'Mikkel'),
         ('11223344', 'pass3', 'Sara'),
         ('44332211', 'pass4', 'Jonas'),
-        ('77777777', '$2b$05$BoR0ZZHd5L9fpB0A9nfIEOvKBlnPu4mVnOopxgZY.3B3QrgRoUfy2', 'John Doe')
+        ('77777777', '$2b$05$BoR0ZZHd5L9fpB0A9nfIEOvKBlnPu4mVnOopxgZY.3B3QrgRoUfy2', 'John Doe'),
+        ('69696969', '$2b$05$TPfjWVii6GzFFhiWcIt5LOWdtaoSwolkNsXWPEpP/7/n0Lvih6JK.', 'Andreas The G')
     `);
 
     db.run(`INSERT INTO usersInGroup (user, "group", timeStamp) VALUES
@@ -203,16 +204,44 @@ app.get('/groups/:id', (req, res) => {
 
 //Create new group
 app.post('/groups', (req, res) => {
-    let { name, description, image, isClosed} = req.body;
+    let { name, description, image, owner, users } = req.body;
 
-    db.run('INSERT INTO groups (name, description, image, isClosed) VALUES (?, ?, ?, ?)',
-        [name, description, image, isClosed],
+    db.run('INSERT INTO groups (name, description, image) VALUES (?, ?, ?)',
+        [name, description, image],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
-            return res.json({ group_id: this.lastID });
+            let group_id = this.lastID
+
+            db.run('INSERT INTO usersInGroup (user, "group", timeStamp) VALUES (?, ?, CURRENT_TIMESTAMP)',
+                [owner, group_id],
+                function(err) {
+                    if (err) return res.status(500).json({error: err.message});
+
+                    let sqlStmt = db.prepare('INSERT INTO usersInGroup (user, "group", timeStamp) VALUES (?, ?, CURRENT_TIMESTAMP)');
+                    users.forEach(user => sqlStmt.run(user.id, group_id));
+                    sqlStmt.finalize(finalerror => {
+                        if (finalerror) return res.status(500).json({error: finalerror.message});
+                        return res.status(200).json({group_id: group_id});
+                    });
+                    //return res.json({group_id: group_id})
+                }
+            );
         }
     );
 });
+
+app.get("/users/search/:searchString", (req, res) => {
+    const { searchString } = req.params;
+
+    db.all('SELECT * FROM users WHERE phoneNumber LIKE ?',
+        [`%${searchString}%`],
+        function(err, rows) {
+            if(err) return res.status(500).json({err: err.message });
+            if(!rows) return res.status(404).json({err: 'No expenses found for this user' });
+            res.json(rows);
+        }
+    )
+})
 
 app.get('/expenses/:id', (req, res) => {
    const { id } = req.params;
