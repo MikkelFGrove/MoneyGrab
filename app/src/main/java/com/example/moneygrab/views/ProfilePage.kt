@@ -57,16 +57,17 @@ class ProfilePageViewModel() : ViewModel() {
     fun saveUser(context: Context) {
         viewModelScope.launch {
             val response = try {
-                api.updateUser(APIEndpoints.UpdateUser(userId.value, phoneNumber.value, name.value, ""))
+                api.updateUser(APIEndpoints.UpdateUser( phoneNumber.value, name.value, "", userId.value))
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 null
             }
 
-            if (response?.code() != 200) {
+            if (!(response?.isSuccessful?: false)) {
                 errorMessage.value = "The phone number or password is incorrect"
             } else {
                 response.body()?.let {
+                    println("SIGMASABALLS")
                     CurrentUser(context).saveUser(it)
                     editMode.value = false
                 }

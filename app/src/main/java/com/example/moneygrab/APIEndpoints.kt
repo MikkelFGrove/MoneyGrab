@@ -59,7 +59,7 @@ interface APIEndpoints {
     @POST("/expenses")
     suspend fun createExpense(@Body body: Expense): Response<Int>
 
-    @POST("users")
+    @POST("/update/users")
     suspend fun updateUser(@Body body: UpdateUser): Response<com.example.debtcalculator.data.User>
 
     @GET("/groups/{groupId}/expenses")
@@ -87,10 +87,10 @@ interface APIEndpoints {
     )
 
     data class UpdateUser (
-        val userId: Int,
         val phoneNumber: String,
         val name: String,
-        val image: String?
+        val image: String?,
+        val userId: Int
     )
 
     data class ChatExpense(
