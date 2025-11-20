@@ -57,7 +57,7 @@ class ProfilePageViewModel() : ViewModel() {
     fun saveUser(context: Context) {
         viewModelScope.launch {
             val response = try {
-                api.updateUser(APIEndpoints.UpdateUser( phoneNumber.value, name.value, "", userId.value))
+                api.updateUser(APIEndpoints.UpdateUser(    id = userId.value, phoneNumber = phoneNumber.value, name = name.value, image = ""))
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 null
@@ -199,9 +199,7 @@ fun ProfilePage(
 
         if (profilePageViewModel.editMode.value){
             Button(
-                onClick = {
-                    profilePageViewModel.saveUser(context)
-                },
+                onClick = { profilePageViewModel.saveUser(context) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

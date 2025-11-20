@@ -366,7 +366,7 @@ app.post('/update/users', (req, res) => {
     err => {
         if(err) return res.status(500).json({error: err.message});
     });
-    db.get('SELECT * FROM users WHERE id = ?', 
+    db.get('SELECT id, phoneNumber, name, image FROM users WHERE id = ?',
         [id],
     (err, row) => {
         if(err) return res.status(500).json({error: err.message});

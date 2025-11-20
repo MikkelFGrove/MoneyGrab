@@ -91,7 +91,7 @@ interface APIEndpoints {
         val phoneNumber: String,
         val name: String,
         val image: String?,
-        val userId: Int
+        val id: Int
     )
 
     data class ChatExpense(
