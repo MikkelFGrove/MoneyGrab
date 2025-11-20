@@ -2,6 +2,8 @@ package com.example.authentication
 
 import android.content.Context
 import com.example.debtcalculator.data.User
+import kotlin.apply
+import kotlin.text.clear
 
 class CurrentUser(context: Context) {
 
@@ -22,7 +24,6 @@ class CurrentUser(context: Context) {
         val name = prefs.getString("username", null) ?: return null
         return User(id, phone, name, null)
     }
-
     fun clear() {
         prefs.edit().clear().apply()
     }
