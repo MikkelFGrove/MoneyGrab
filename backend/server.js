@@ -114,7 +114,8 @@ db.serialize(() => {
         ('12345678', 'pass1', 'Anna'),
         ('87654321', 'pass2', 'Mikkel'),
         ('11223344', 'pass3', 'Sara'),
-        ('44332211', 'pass4', 'Jonas')
+        ('44332211', 'pass4', 'Jonas'),
+        ('77777777', '$2b$05$BoR0ZZHd5L9fpB0A9nfIEOvKBlnPu4mVnOopxgZY.3B3QrgRoUfy2', 'John Doe')
     `);
 
     db.run(`INSERT INTO usersInGroup (user, "group", timeStamp) VALUES
@@ -122,7 +123,10 @@ db.serialize(() => {
         (2, 1, datetime('now')),
         (3, 1, datetime('now')),
         (4, 2, datetime('now')),
-        (1, 2, datetime('now'))
+        (1, 2, datetime('now')),
+        (5, 1, datetime('now')),
+        (5, 2, datetime('now')),
+        (5, 3, datetime('now'))
     `);
 
     db.run(`INSERT INTO messages (sender, "group", content, timeStamp) VALUES
@@ -137,7 +141,7 @@ db.serialize(() => {
         (1, 1, 'Leje af sommerhus', 2000.00, datetime('now')),
         (2, 1, 'Mad og drikke', 600.00, datetime('now')),
         (4, 2, 'Netflix abonnement', 120.00, datetime('now')),
-        (1, 2, 'El regning', 200.00, datetime('now'))
+        (5, 1, 'Mad og drikke', 600.00, datetime('now'))
         `);
 
     db.run(`INSERT INTO payersInExpense (user, expense) VALUES
@@ -150,6 +154,7 @@ db.serialize(() => {
         (1, 3),
         (4, 3),
         (1, 4),
+        (1, 2),
         (4, 4)
     `);
 
@@ -181,6 +186,7 @@ app.get('/groups/:id/messages', (req, res) => {
         });
 });
 
+
 // get group by id
 app.get('/groups/:id', (req, res) => {
     let { id } = req.params;
@@ -190,6 +196,7 @@ app.get('/groups/:id', (req, res) => {
         (err, row) => {
             if(err) return res.status(500).json({error: err.message});
             if(!row) return res.status(404).json({error: 'group not found'});
+            row.tabClosed = row.tabClose == 1;
             res.json(row);
         });
 });
@@ -207,21 +214,31 @@ app.post('/groups', (req, res) => {
     );
 });
 
+app.get('/expenses/:id', (req, res) => {
+   const { id } = req.params;
+       db.get('SELECT * FROM expenses WHERE id = ?',
+           [id],
+           (err, row) => {
+               if(err) return res.status(500).json({error: err.message});
+               if(!row) return res.status(404).json({err: 'Expense not found'});
+               res.json(row);
+           });
+});
+
 //Create new expense (This assumes that the payers is an array when being send to the backend)
 app.post('/expenses', (req, res) => {
-    let { owner, group, description, amount, payers } = req.body;
-
+    const { owner, group, description, amount, payers } = req.body;
     db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp)
             VALUES (?,?,?,?, CURRENT_TIMESTAMP)`,
-        [owner, group, description, amount],
+        [owner.id, group, description, amount],
         function(err) {
         if(err) return res.status(500).json({err: err.message});
 
         let expenseId = this.lastID;
         let payerList = payers.length > 0 ? payers: [owner];
 
-        let sqlStatement = db.prepare('INSERT INTO payersInExpense (user, expense) VALUES (?, ?)');
-        payerList.forEach(user => sqlStatement.run(user, expenseId));
+        const sqlStatement = db.prepare('INSERT INTO payersInExpense (user, expense) VALUES (?, ?)');
+        payerList.forEach(user => sqlStatement.run(user.id, expenseId));
         sqlStatement.finalize((err) => {
             if(err) {
                 return res.status(500).json({error: err});
@@ -231,6 +248,19 @@ app.post('/expenses', (req, res) => {
         });
     });
 });
+
+// Get users in a group
+app.get('/groups/:id/users', (req, res) => {
+    let {id } = req.params;
+    db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+        [id],
+        (err, rows) => {
+            if(err) return res.status(500).json({error: err.message});
+            if(!rows) return res.status(404).json({error: 'No users found within that group'});
+            res.json(rows);
+        }
+    )
+})
 
 
 //Create new transaction
@@ -286,7 +316,7 @@ app.post('/login', async (req, res) => {
     try {
         let {phoneNumber, password } = req.body;
     
-            db.get('SELECT phoneNumber, password, name, image FROM users WHERE phoneNumber = ?',
+            db.get('SELECT id, phoneNumber, password, name, image FROM users WHERE phoneNumber = ?',
             [phoneNumber],
             async (err, user) => {
                 if (err) return res.status(500).json({err: err.message});
@@ -295,8 +325,8 @@ app.post('/login', async (req, res) => {
                 let isMatch = await bcrypt.compare(password, user.password);
                 if(!isMatch) return res.status(401).json({err: 'Wrong password'});
 
-                let {phoneNumber, name, image } = user;
-                return res.json({phoneNumber, name, image});
+                const {id, phoneNumber, name, image } = user;
+                return res.json({id, phoneNumber, name, image});
             }
         );
     } catch (e) {
@@ -347,12 +377,10 @@ app.get('/users/:id/groups', (req, res) => {
 
 //Get expenses on a group
 app.get('/groups/:id/expenses', (req, res) => {
-  let { id } = req.params;
-  db.all(
-    `SELECT expense.id, expense.owner, expense."group", expense.description, expense.amount, expense.timeStamp
-     FROM expenses expense
-     INNER JOIN payersInExpense pIE on expense.id = pIE.expense
-     WHERE expense."group" = ?`,
+  const { id } = req.params;
+  db.all(`SELECT id, owner, "group", description, amount, timeStamp
+          FROM expenses expense
+          WHERE expense."group" = ?`,
     [id],
     (err, rows) => {
       if (err) return res.status(500).json({ err: err.message });

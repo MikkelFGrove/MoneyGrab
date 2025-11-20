@@ -26,6 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,77 +42,51 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.debtcalculator.data.Expense
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.debtcalculator.data.Group
-import com.example.debtcalculator.data.User
-import com.example.moneygrab.CurrentUser
+import com.example.authentication.CurrentUser
+import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
+import kotlinx.coroutines.launch
 
 @Immutable
 data class FrontendGroup(val id: Int, val name: String)
 
-fun fetchGroups(user: User?): List<Group>{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    val userA = User(phoneNumber = "11111111", name = "Alice", image = null)
-    val userB = User(phoneNumber = "22222222", name = "Bob", image = null)
-    val userC = User(phoneNumber = "33333333", name = "Charlie", image = null)
-    val userD = User(phoneNumber = "44444444", name = "Diana", image = null)
+class GroupPageViewModel() : ViewModel(){
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    var groups = mutableStateListOf<Group>()
+    var errorHappened = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
 
-    val expense1 = Expense(
-        amount = 120f,
-        description = "Dinner",
-        lender = userA,
-        payers = arrayOf(userA, userB)
-    )
+    fun fetchGroups(userId: Int) {
+        println("outer1")
+        viewModelScope.launch {
+            println("outer2")
+            val response = try {
+                api.getGroups(userId)
+            } catch (e: Exception) {
+                errorMessage.value = "An error has occurred"
+                println(errorMessage)
+                null
+            }
+            println(response?.body())
 
-    val expense2 = Expense(
-        amount = 90f,
-        description = "Cinema",
-        lender = userC,
-        payers = arrayOf(userC, userD)
-    )
-
-    val expense3 = Expense(
-        amount = 300f,
-        description = "Weekend trip",
-        lender = userB,
-        payers = arrayOf(userA, userB, userC, userD)
-    )
-
-    val group1 = Group(
-        name = "Friends",
-        users = setOf(userA, userB),
-        expenses = mutableListOf(expense1),
-        messages = emptyArray(),
-        description = "What", // Empty as requested
-        id = 1
-    )
-
-    val group2 = Group(
-        name = "Family",
-        users = setOf(userC, userD),
-        expenses = mutableListOf(expense2),
-        messages = emptyArray(),
-        description = "What",
-        id = 2
-    )
-
-    val group3 = Group(
-        name = "Work Trip",
-        users = setOf(userA, userB, userC, userD),
-        expenses = mutableListOf(expense3),
-        messages = emptyArray(),
-        description = "What",
-        id = 3
-    )
-
-    return listOf(group1, group2, group3)
+            if (!(response?.isSuccessful ?: false)){
+                errorMessage.value = "An error has occurred"
+                errorHappened.value = true
+                println(errorMessage)
+            } else {
+                response.body()?.let { list ->
+                    groups.clear()
+                    groups.addAll(list)
+                    println(groups)
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -117,7 +94,19 @@ fun fetchGroups(user: User?): List<Group>{
 fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }
-    val groups = fetchGroups(currentUser.getUser())
+    var user = currentUser.getUser()
+
+    val groupPageViewModel: GroupPageViewModel = viewModel()
+
+
+    LaunchedEffect(user){
+        user?.let {
+            println("User ID: ${it.id}")
+            groupPageViewModel.fetchGroups(it.id)
+        }
+    }
+    val groups: List<Group> = groupPageViewModel.groups
+
     Box(modifier = modifier.fillMaxSize()) {
 
         LazyColumn(

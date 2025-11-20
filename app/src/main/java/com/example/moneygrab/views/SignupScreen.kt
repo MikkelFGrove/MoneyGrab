@@ -1,10 +1,14 @@
 package com.example.moneygrab.views
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -15,32 +19,67 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.moneygrab.CurrentUser
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.authentication.CurrentUser
+import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
-import com.example.moneygrab.APIEndpoints
 import kotlinx.coroutines.launch
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.LoginRequest
 import com.example.moneygrab.R
 
+class SignupViewModel() : ViewModel() {
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    var name = mutableStateOf("")
+    var phone = mutableStateOf("")
+    var password = mutableStateOf("")
+    var errorHasOccurred = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
+
+    fun signup(navigation: () -> Unit, context: Context) {
+        viewModelScope.launch {
+            val response = try {
+                api.signup(APIEndpoints.SignupData(phone.value, password.value, name.value,""))
+            } catch (e: Exception) {
+                println(e.message)
+                errorMessage.value = "An error has occurred"
+                errorHasOccurred.value = true
+                null
+            }
+
+            if (!(response?.isSuccessful ?: false)) {
+                errorMessage.value = "The phone number is already in use"
+                println(response?.body()?.name)
+                errorHasOccurred.value = true
+            } else {
+                response.body()?.let {
+                    CurrentUser(context).saveUser(it)
+                    navigation()
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun SignUpScreen(
     modifier: Modifier = Modifier,
-    onSignUpSuccess: () -> Unit,
-    onBackLogin: () -> Unit
+    onSignUpClicked: () -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
-    val currentUser = remember { CurrentUser(context) }
-    val scope = rememberCoroutineScope()
+    val signupViewModel: SignupViewModel = viewModel()
+    var name by signupViewModel.name
+    var phone by signupViewModel.phone
+    var password by signupViewModel.password
+    var errorMessage by signupViewModel.errorMessage
+    var errorHasOccurred by signupViewModel.errorHasOccurred
+    var context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -76,25 +115,14 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Phone number") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Phone number") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            modifier = Modifier.fillMaxWidth()
+        )
 
             Spacer(Modifier.height(12.dp))
 
@@ -110,48 +138,47 @@ fun SignUpScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            Button(
-                onClick = {
-                    scope.launch {
-                        try {
-                            val user = signUpUser(name, email, phone, password)
-                            currentUser.saveUser(user)
-                            onSignUpSuccess()
-                        } catch (e: Exception) {
-                            errorMessage = "Buhu"
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(48.dp)
-            ) {
-                Text("Create account", fontSize = 18.sp)
-            }
+        Button(
+            onClick = { signupViewModel.signup(onSignUpClicked, context) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Text("Create account", fontSize = 18.sp)
+        }
 
-            errorMessage?.let {
-                Spacer(Modifier.height(12.dp))
-                Text(it, color = Color.Red)
-            }
+        if (errorHasOccurred) {
+            Spacer(Modifier.height(12.dp))
+            Text(errorMessage, color = Color.Red)
         }
     }
-
-suspend fun signUpUser(name: String, email: String, phone: String, password: String): User {
-    val api = RetrofitClient().api
-
-    /*return try {
-        val signUpRequest = SignUpRequest(phone, password)
-        api.signup(signUpRequest)
-    } catch (e: Exception) {
-        User(phoneNumber = phone, name = "Mi Bomba Clat", image = null)
-    }*/
-    return User(phoneNumber = phone, name = name, image = null)
+}
+@Composable
+fun ErrorCard(text: String, modifier: Modifier = Modifier) {
+    Card (
+        modifier = modifier,
+        shape = MaterialTheme.shapes.extraSmall,
+        colors = CardColors(
+            MaterialTheme.colorScheme.error,
+            MaterialTheme.colorScheme.onError,
+            Color.Transparent,
+            Color.Transparent
+        )
+    ) {
+        Text (
+            modifier = Modifier.fillMaxWidth().padding(0.dp, 5.dp),
+            text = text,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
-/*@Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
     MoneyGrabTheme {
         SignUpScreen(
-            onSignUpClicked = { _, _, _, _ -> }
+            onSignUpClicked = { }
         )
     }
-}*/
+}

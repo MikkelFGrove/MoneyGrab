@@ -1,12 +1,9 @@
 package com.example.moneygrab.views
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,12 +21,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
-import com.example.moneygrab.CurrentUser
+import com.example.authentication.CurrentUser
+import com.example.debtcalculator.data.Expense
+import com.example.debtcalculator.data.Message
+import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
+import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.components.SlideToUnlock
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import kotlinx.coroutines.launch
 
 private fun getSum(currentUser: User?, group1: Group?): Double{
     /*val api = RetrofitClient().api
@@ -50,17 +55,102 @@ private fun fetchGroup(id: Int): Group?{
     }*/
     return null
 }
+
+class ConfirmPaymentModelView() : ViewModel() {
+    private val api: APIEndpoints = RetrofitClient.getAPI()
+    var errorHasOccurred = mutableStateOf(false)
+    var errorMessage = mutableStateOf("")
+    var group: Group = Group(
+        id = -1,
+        name = "",
+        users = emptySet<User>(),
+        expenses = emptyList<Expense>() as MutableList<Expense>,
+        tabClosed = false,
+        messages = emptyList<Message>()
+    )
+
+    fun fetchGroupData(groupId: Int) {
+        viewModelScope.launch {
+            val response = try {
+                api.getGroup(groupId)
+            } catch (e: Exception) {
+                errorMessage.value = "An error has occurred"
+                null
+            }
+
+            if (response?.code() != 200) {
+                errorMessage.value = "The phone number or password is incorrect"
+            } else {
+                response.body()?.let {
+                    group = it
+                }
+            }
+        }
+    }
+    var sum = mutableStateOf(0f)
+    fun getSum(context: Context, groupId: Int){
+        viewModelScope.launch {
+            val response = try {
+                api.getAmountOwed(groupId = groupId, userId = CurrentUser(context).getUser()?.id
+                    ?: -1)
+            } catch (e: Exception) {
+                println(e.message)
+                errorMessage.value = "An error has occurred"
+                errorHasOccurred.value = true
+                null
+            }
+
+            if (response?.isSuccessful ?: false) {
+                response.body()?.let {
+                    sum.value = it
+                }
+            } else {
+                errorMessage.value = "Not enough funds"
+                errorHasOccurred.value = true
+            }
+        }
+    }
+    fun payTransaction(navigation: (Group) -> Unit, context: Context){
+        viewModelScope.launch {
+            val response = try {
+                api.payTransaction(groupId = group.id, userId = CurrentUser(context).getUser()?.phoneNumber?: "")
+            } catch (e: Exception) {
+                println(e.message)
+                errorMessage.value = "An error has occurred"
+                errorHasOccurred.value = true
+                null
+            }
+
+            if (!(response?.isSuccessful ?: false)) {
+                errorMessage.value = "Not enough funds"
+                errorHasOccurred.value = true
+            } else {
+                navigation(group)
+            }
+        }
+    }
+
+}
+
 @Composable
 fun ConfirmPaymentPage(
     modifier: Modifier = Modifier,
     groupId: Int,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    navigation: (Group) -> Unit
 ) {
+
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }.getUser()
-    val group = fetchGroup(groupId)
-    val groupName = group?.name ?: ""
-    val debt = getSum(currentUser, group)
+    val confirmPaymentModelView: ConfirmPaymentModelView = viewModel()
+
+    LaunchedEffect(groupId) {
+        confirmPaymentModelView.fetchGroupData(groupId)
+        confirmPaymentModelView.getSum(context, groupId)
+    }
+
+    val groupName = confirmPaymentModelView.group.name
+    val debt = getSum(currentUser, confirmPaymentModelView.group)
     //State hoisting for the slider
     var isLoading by remember { mutableStateOf(false) }
 
@@ -140,7 +230,13 @@ fun ConfirmPaymentPage(
                 ) {
                     SlideToUnlock(
                         isLoading = isLoading,
-                        onUnlockRequested = { isLoading = true }
+                        onUnlockRequested = {
+                            confirmPaymentModelView.payTransaction(
+                                navigation = { navigation },
+                                context = context,
+                            )
+                            isLoading = true
+                        }
                     )
                 }
                 Spacer(Modifier.height(16.dp))
@@ -149,10 +245,11 @@ fun ConfirmPaymentPage(
 }
 
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun PayPreview() {
     MoneyGrabTheme {
         ConfirmPaymentPage(groupId = 1, onBack = {println("bubu")})
     }
 }
+*/

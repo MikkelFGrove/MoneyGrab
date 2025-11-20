@@ -23,6 +23,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.debtcalculator.data.Group
 import com.example.moneygrab.components.NotificationHelper
+import com.example.authentication.CurrentUser
+import com.example.moneygrab.views.ChatScreen
+import com.example.moneygrab.views.LoginScreen
+import com.example.moneygrab.views.SignUpScreen
+
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddExpenseView
 import com.example.moneygrab.views.AddPayersView
@@ -37,10 +42,8 @@ import com.example.moneygrab.views.TestData
 
 
 
+
 class MainActivity : ComponentActivity() {
-
-    private lateinit var apiInterface: APIEndpoints
-
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
@@ -88,13 +91,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavManager() {
-    val group = TestData()
     val navController = rememberNavController()
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }
     val activity = context as? MainActivity
 
-    val startDestination = if (currentUser != null) "groupPage" else "login"
+    val startDestination = if (currentUser.getUser() != null) "groupPage" else "login"
 
     Scaffold { innerPadding ->
         NavHost(
@@ -103,15 +105,14 @@ fun NavManager() {
             modifier = Modifier.padding(innerPadding)
         ) {
                 composable("signup") {
-                    SignUpScreen(
-                        onSignUpSuccess = { navController.navigate("ProfilePage") },
-                        onBackLogin = { navController.navigate("login")}
-                    )
+                    SignUpScreen(onSignUpClicked = {
+                        navController.navigate("ProfilePage")
+                    })
                 }
 
                 composable("login") {
                     LoginScreen(
-                        onLoginSuccess = { navController.navigate("groupPage") },
+                        onLoginClicked = { navController.navigate("groupPage") },
                         onSignupClicked = { navController.navigate("signUp") }
                     )
                 }
@@ -133,12 +134,11 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
 
                     ChatScreen(
-                        groupID = groupId,
-                        addExpense = { Group -> navController.navigate("addExpense/${Group.id}") },
-                        onBack = { navController.navigate("groupPage") },
-                        onConfirmation = { Group ->
-                            navController.navigate("confirmPayment/${Group.id}")
-                            println("Configrm")
+                        groupId = groupId,
+                        addExpense = { group -> navController.navigate("addExpense/${group.id}") },
+                        onBack = { navController.navigateUp() },
+                        onConfirmation = { group ->
+                            navController.navigate("confirmPayment/${group.id}")
                         },
                         onNotifyUsers = {
                             activity?.notifyUsers()
@@ -154,7 +154,7 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     AddExpenseView(
                         groupId = groupId,
-                        addToExpense = { Group -> navController.navigate("addToExpense/${Group?.id}") },
+                        onCreateExpense = { group -> navController.navigate("groupChat/${group?.id}") },
                         back = { navController.navigate("groupChat/$groupId") }
                     )
                 }
@@ -164,18 +164,6 @@ fun NavManager() {
                         onBackClick = { navController.navigate("groupPage") },
                         onLogoutClick = { navController.navigate("login") }
                         //onEditClick = { },
-                    )
-                }
-
-                composable(
-                    "addToExpense/{groupId}", arguments = listOf(
-                    navArgument("groupId") { type = NavType.IntType }
-                )) { backStackEntry ->
-                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
-                    AddPayersView(
-                        groupId = groupId,
-                        onAddExpense = { Group -> navController.navigate("groupChat/${Group.id}") },
-                        onBack = { navController.navigate("addExpense/$groupId") }
                     )
                 }
 
