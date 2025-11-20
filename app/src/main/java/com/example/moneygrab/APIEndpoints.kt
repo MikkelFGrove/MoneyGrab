@@ -16,7 +16,11 @@ data class LoginRequest(
 )
 interface APIEndpoints {
     @POST("user/{id}/group/{groupId}")
-    suspend fun payTransaction(@Path("id") userId: String, @Path("groupId") groupId: Int): Response<Int>
+    suspend fun payTransaction(
+        @Path("id") userId: String,
+        @Path("groupId") groupId: Int
+    ): Response<Int>
+
     @GET("users/search/{search}")
     suspend fun getSuggestedUsers(@Path("search") search: String): Response<List<User>>
 
@@ -41,7 +45,10 @@ interface APIEndpoints {
     suspend fun closeTab(@Path("id") id: Int): Response<Int>
 
     @GET("/groups/{groupId}/{userId}/sum")
-    suspend fun getAmountOwed(@Path("groupId") groupId: Int, @Path("userId") userId: Int): Response<Float>
+    suspend fun getAmountOwed(
+        @Path("groupId") groupId: Int,
+        @Path("userId") userId: Int
+    ): Response<OwedAmount>
 
     @GET("/expenses/{expenseId}")
     suspend fun getExpense(@Path("expenseId") expenseId: Int): Response<Expense>
@@ -51,40 +58,40 @@ interface APIEndpoints {
 
     @POST("/expenses")
     suspend fun createExpense(@Body body: Expense): Response<Int>
+
     @GET("/groups/{groupId}/expenses")
     suspend fun getExpensesInGroup(@Path("groupId") groupId: Int): Response<MutableList<ChatExpense>>
 
     @GET("/groups/{groupId}/users")
     suspend fun getUsersInGroup(@Path("groupId") groupId: Int): Response<MutableSet<User>>
 
-    data class LoginData (
+    data class LoginData(
         val phoneNumber: String,
         val password: String
     )
 
-    data class GroupData (
+    data class GroupData(
         val name: String,
+        val description: String,
         val users: List<User>
     )
 
-    data class SignupData (
+    data class SignupData(
         val phoneNumber: String,
         val password: String,
         val name: String,
         val image: String?
     )
 
-    data class ChatExpense (
+    data class ChatExpense(
         var id: Int,
         var amount: Float,
         var description: String,
         var group: Int,
         var owner: Int,
     )
-}
 
-data class GroupData (
-    val name: String,
-    val description: String,
-    val users: List<User>
-)
+    data class OwedAmount(
+        var amount: Float
+    )
+}

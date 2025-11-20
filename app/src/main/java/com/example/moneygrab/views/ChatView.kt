@@ -40,9 +40,10 @@ class ChatViewModel() : ViewModel() {
         users = emptySet(),
         expenses = mutableListOf(),
         tabClosed = false,
+        description = "",
         messages = mutableListOf()
     ))
-    var amountOwed = mutableFloatStateOf(Float.NaN)
+    var amountOwed = mutableFloatStateOf(0f)
     var messages = mutableStateListOf<Message>()
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
@@ -76,9 +77,9 @@ class ChatViewModel() : ViewModel() {
                 }
             }
 
-            g?.let {
+            g?.let { g ->
                 val expenses = try {
-                    api.getExpensesInGroup(it.id)
+                    api.getExpensesInGroup(g.id)
                 } catch (e: Exception) {
                     println(e.message)
                     null
@@ -101,26 +102,28 @@ class ChatViewModel() : ViewModel() {
                             ),
                             mutableListOf()))
                     }
-                    it.expenses = updatedExpenses
+                    g.expenses = updatedExpenses
                 }
-                group = it
+                group = g
             }
 
             println("Number of expenses: ${group.expenses}")
         }
     }
 
-    fun fetchAmountOwed() {
+    fun fetchAmountOwed(groupId: Int) {
         viewModelScope.launch {
             user?.let {
                 val response = try {
-                    api.getAmountOwed(group.id, it.id)
+                    api.getAmountOwed(groupId, it.id)
                 } catch (e: Exception) {
+                    println(e.message)
                     null
                 }
 
                 response?.body()?.let {
-                    amountOwed.floatValue = it
+                    println(it)
+                    amountOwed.floatValue = it.amount
                 }
             }
         }
@@ -286,7 +289,7 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
 }
 
 @Composable
-fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit, onNotifyUsers: () -> Unit) {
+fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit, onNotifyUsers: () -> Unit) {
     val chatViewModel: ChatViewModel = viewModel()
     var showCloseDialog by chatViewModel.showCloseDialog
     var amountOwed by chatViewModel.amountOwed
@@ -297,7 +300,7 @@ fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
     LaunchedEffect(groupId) {
         chatViewModel.setUser(context)
         chatViewModel.fetchGroupData(groupId)
-        chatViewModel.fetchAmountOwed()
+        chatViewModel.fetchAmountOwed(groupId)
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -317,8 +320,7 @@ fun ChatScreen(groupID: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
                 .fillMaxWidth()
         )
 
-        InputBar(onNotifyUsers, addExpense, group)
-        InputBar(addExpense, chatViewModel.group)
+        InputBar(onNotifyUsers, addExpense, chatViewModel.group)
 
         if (showCloseDialog) {
             DialogCloseTheTab(

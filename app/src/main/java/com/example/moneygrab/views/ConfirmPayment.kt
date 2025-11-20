@@ -66,6 +66,7 @@ class ConfirmPaymentModelView() : ViewModel() {
         users = emptySet<User>(),
         expenses = emptyList<Expense>() as MutableList<Expense>,
         tabClosed = false,
+        description = "",
         messages = emptyList<Message>()
     )
 
@@ -102,7 +103,7 @@ class ConfirmPaymentModelView() : ViewModel() {
 
             if (response?.isSuccessful ?: false) {
                 response.body()?.let {
-                    sum.value = it
+                    sum.value = it.amount
                 }
             } else {
                 errorMessage.value = "Not enough funds"
@@ -136,8 +137,7 @@ class ConfirmPaymentModelView() : ViewModel() {
 fun ConfirmPaymentPage(
     modifier: Modifier = Modifier,
     groupId: Int,
-    onBack: () -> Unit,
-    navigation: (Group) -> Unit
+    navigation: () -> Unit
 ) {
 
     val context = LocalContext.current
@@ -178,7 +178,7 @@ fun ConfirmPaymentPage(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = navigation) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_arrow_back),
                             contentDescription = "Back"

@@ -69,7 +69,7 @@ class GroupPageViewModel() : ViewModel(){
                 api.getGroups(userId)
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
-                println(errorMessage)
+                println(e.message)
                 null
             }
             println(response?.body())

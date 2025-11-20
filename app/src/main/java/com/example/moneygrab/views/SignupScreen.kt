@@ -72,6 +72,7 @@ class SignupViewModel() : ViewModel() {
 fun SignUpScreen(
     modifier: Modifier = Modifier,
     onSignUpClicked: () -> Unit,
+    onBackLogin: () -> Unit
 ) {
     val signupViewModel: SignupViewModel = viewModel()
     var name by signupViewModel.name
@@ -178,7 +179,8 @@ fun ErrorCard(text: String, modifier: Modifier = Modifier) {
 fun SignUpScreenPreview() {
     MoneyGrabTheme {
         SignUpScreen(
-            onSignUpClicked = { }
+            onSignUpClicked = { },
+            onBackLogin = {}
         )
     }
 }

@@ -363,7 +363,7 @@ app.get('/users/:id/expenses', (req, res) => {
 // Get groups on a user
 app.get('/users/:id/groups', (req, res) => {
     let { id } = req.params;
-    db.all(`SELECT groups.id, groups.name, groups.descriptions, groups.image
+    db.all(`SELECT groups.id, groups.name, groups.description, groups.image
             FROM groups 
             INNER JOIN usersInGroup uIG on groups.id = uIG."group" 
             WHERE uIG.user = ?`,
@@ -472,7 +472,7 @@ app.get('/groups/:id/:user/sum', (req, res) => {
                                     return res.status(404).json({ error: "Giraffe balance not found" });
                                 }
 
-                                return res.json(userBalance.balance);
+                                return res.json({"amount": userBalance.balance});
                             }
                         }
                     );

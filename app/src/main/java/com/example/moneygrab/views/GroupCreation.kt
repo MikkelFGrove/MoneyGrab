@@ -61,7 +61,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.example.moneygrab.GroupData
 import com.example.debtcalculator.data.User
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
@@ -104,9 +103,16 @@ class GroupViewModel() : ViewModel() {
 
     fun createGroup(navigation: () -> Unit) {
         viewModelScope.launch {
-            try {
-                retrofitClient.api.createGroup(GroupData(groupName.value, description.value, chosenUsers))
+            var response = try {
+                api.createGroup(
+                    APIEndpoints.GroupData(
+                        groupName.value,
+                        description.value,
+                        chosenUsers
+                    )
+                )
             } catch (e: Exception) {
+                println(e.message)
                 errorMessage.value = "A network error has occurred"
                 errorCreatingGroup.value = true
                 null

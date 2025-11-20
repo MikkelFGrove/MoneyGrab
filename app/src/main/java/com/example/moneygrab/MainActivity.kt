@@ -21,7 +21,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.debtcalculator.data.Group
 import com.example.moneygrab.components.NotificationHelper
 import com.example.authentication.CurrentUser
 import com.example.moneygrab.views.ChatScreen
@@ -30,15 +29,10 @@ import com.example.moneygrab.views.SignUpScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddExpenseView
-import com.example.moneygrab.views.AddPayersView
-import com.example.moneygrab.views.ChatScreen
 import com.example.moneygrab.views.ConfirmPaymentPage
 import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupPage
-import com.example.moneygrab.views.LoginScreen
 import com.example.moneygrab.views.ProfilePage
-import com.example.moneygrab.views.SignUpScreen
-import com.example.moneygrab.views.TestData
 
 
 
@@ -105,9 +99,11 @@ fun NavManager() {
             modifier = Modifier.padding(innerPadding)
         ) {
                 composable("signup") {
-                    SignUpScreen(onSignUpClicked = {
-                        navController.navigate("ProfilePage")
-                    })
+                    SignUpScreen(
+                        onSignUpClicked = { navController.navigate("ProfilePage") },
+                        onBackLogin = { navController.navigate("login")}
+                    )
+
                 }
 
                 composable("login") {
@@ -136,7 +132,7 @@ fun NavManager() {
                     ChatScreen(
                         groupId = groupId,
                         addExpense = { group -> navController.navigate("addExpense/${group.id}") },
-                        onBack = { navController.navigateUp() },
+                        onBack = { navController.navigate("groupPage") },
                         onConfirmation = { group ->
                             navController.navigate("confirmPayment/${group.id}")
                         },
@@ -145,7 +141,6 @@ fun NavManager() {
                         }
                     )
                 }
-
 
                 composable(
                     "addExpense/{groupId}", arguments = listOf(
@@ -181,7 +176,8 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     ConfirmPaymentPage(
                         groupId = groupId,
-                        onBack = { navController.navigate("groupChat/$groupId") })
+                        navigation = { navController.navigate("groupChat/$groupId")}
+                    )
                 }
             }
         }
