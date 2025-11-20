@@ -78,9 +78,7 @@ class ProfilePageViewModel() : ViewModel() {
 @Composable
 fun ProfilePage(
     onBackClick: () -> Unit = {},
-    onEditClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {}
-
 ) {
     val context = LocalContext.current
     val profilePageViewModel: ProfilePageViewModel = viewModel()
@@ -116,9 +114,7 @@ fun ProfilePage(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
-        // Currently just a placeholder, would be cool to actually
-        // create the functionality to add images from your PC
+        // Profile image
         Box(
             modifier = Modifier
                 .size(200.dp)
@@ -132,28 +128,6 @@ fun ProfilePage(
                 modifier = Modifier
                     .size(200.dp)
                     .clip(CircleShape)
-            )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { context.openNotificationSettings() },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_notification_icon),
-                contentDescription = "Notification Icon",
-                modifier = Modifier.size(30.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-            )
-
-            Text(
-                text = "Manage notifications",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
         }
         Spacer(modifier = Modifier.height(24.dp))
@@ -191,9 +165,32 @@ fun ProfilePage(
             )
         }
 
+        Spacer(modifier = Modifier.height(24.dp))
 
+        if(!profilePageViewModel.editMode.value) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { context.openNotificationSettings() },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_notification_icon),
+                    contentDescription = "Notification Icon",
+                    modifier = Modifier.size(30.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "Manage notifications",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.weight(1f))
+
         if (profilePageViewModel.editMode.value){
             Button(
                 onClick = {
@@ -204,7 +201,7 @@ fun ProfilePage(
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // Maybe add the purple button back?
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
                 )
             ) {
@@ -227,7 +224,7 @@ fun ProfilePage(
                 .fillMaxWidth()
                 .height(48.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFE53935), // Maybe add the purple button back?
+                containerColor = Color(0xFFE53935),
                 contentColor = Color.White
             )
         ) {

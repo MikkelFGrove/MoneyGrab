@@ -161,7 +161,6 @@ fun NavManager() {
                     ProfilePage(
                         onBackClick = { navController.navigate("groupPage") },
                         onLogoutClick = { navController.navigate("login") }
-                        //onEditClick = { },
                     )
                 }
 
