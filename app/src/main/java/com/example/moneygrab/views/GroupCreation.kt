@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.moneygrab.GroupData
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
@@ -69,17 +70,12 @@ data class User (
     val phoneNumber: Number
 )
 
-data class GroupData (
-    val name: String,
-    val users: List<User>
-)
-
 class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient()) : ViewModel() {
     var chosenUsers = mutableStateListOf<User>()
     var searchResult = mutableStateListOf<User>()
     var groupName = mutableStateOf("")
     var image = mutableStateOf<Bitmap?>(null)
-
+    var description = mutableStateOf("")
     fun storeImage(img: Bitmap?) {
         image.value = img
     }
@@ -99,7 +95,7 @@ class GroupViewModel(private val retrofitClient: RetrofitClient = RetrofitClient
     fun createGroup() {
         viewModelScope.launch {
             try {
-                retrofitClient.api.createGroup(GroupData(groupName.value, chosenUsers))
+                retrofitClient.api.createGroup(GroupData(groupName.value, description.value, chosenUsers))
             } catch (e: Exception) {
                 println(e.message)
             }
@@ -154,6 +150,18 @@ fun GroupCreationView(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        var groupDescription by groupViewModel.description
+        OutlinedTextField(
+            value = groupDescription,
+            label = { Text("Description") },
+            onValueChange = { groupDescription = it },
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(100.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         AccountSearchBar(groupViewModel)
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -161,7 +169,6 @@ fun GroupCreationView(
         CreateButton(groupViewModel, onCreateGroupNavigation)
     }
 }
-
 
 @Composable
 fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
@@ -185,6 +192,8 @@ fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit) {
         }
     }
 }
+
+
 
 @Composable
 fun ImageButton(groupViewModel: GroupViewModel) {

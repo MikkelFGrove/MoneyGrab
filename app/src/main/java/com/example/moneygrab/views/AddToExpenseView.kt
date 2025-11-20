@@ -76,6 +76,7 @@ fun TestData(): Group {
         users = setOf(user1, user2, user3),
         expenses = mutableListOf(expense),
         messages = arrayOf(messages),
+        description = "WHAT",
         id = 1
     )
     return group
@@ -218,6 +219,7 @@ fun AddPayersView(modifier: Modifier = Modifier, groupId: Int, onAddExpense: (Gr
                     users = emptySet(),
                     expenses = mutableListOf(updatedExpense),
                     id = 1,
+                    description = "What",
                     messages = emptyArray()
                 ))
             },
@@ -259,6 +261,7 @@ fun testData(): Group {
         users = setOf(user1, user2, user3),
         expenses = mutableListOf(expense),
         messages = arrayOf(messages),
+        description = "COOOL",
         id = 1
     )
     return group

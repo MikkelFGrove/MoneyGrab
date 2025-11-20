@@ -35,6 +35,7 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     image TEXT,
+    description TEXT,
     isClosed INTEGER DEFAULT 0
     )`);
 
@@ -103,10 +104,10 @@ db.serialize(() => {
 
 
     // Dummy data for tabellerne (AI genereret og ikke verificeret)
-     db.run(`INSERT INTO groups (name, isClosed) VALUES
-        ('Sommerhus-turen', 0),
-        ('Roomies', 0),
-        ('Arbejdsholdet', 1)
+    db.run(`INSERT INTO groups (name, isClosed, description) VALUES
+        ('Sommerhus-turen', 0, 'Planlægning og koordinering af vores sommerhustur'),
+        ('Roomies', 0, 'Gruppen til alt praktisk mellem os der bor sammen'),
+        ('Arbejdsholdet', 1, 'Internt holdchat til arbejdsrelaterede ting')
     `);
 
     db.run(`INSERT INTO users (phoneNumber, password, name) VALUES
@@ -195,10 +196,10 @@ app.get('/groups/:id', (req, res) => {
 
 //Create new group
 app.post('/groups', (req, res) => {
-    let { name, image, isClosed} = req.body;
+    let { name, description, image, isClosed} = req.body;
 
-    db.run('INSERT INTO groups (name, image, isClosed) VALUES (?, ?, ?)',
-        [name, image, isClosed],
+    db.run('INSERT INTO groups (name, description, image, isClosed) VALUES (?, ?, ?, ?)',
+        [name, description, image, isClosed],
         function(err) {
             if (err) return res.status(500).json({ error: err.message });
             return res.json({ group_id: this.lastID });
@@ -332,7 +333,7 @@ app.get('/users/:id/expenses', (req, res) => {
 // Get groups on a user
 app.get('/users/:id/groups', (req, res) => {
     let { id } = req.params;
-    db.all(`SELECT groups.id, groups.name, groups.image 
+    db.all(`SELECT groups.id, groups.name, groups.descriptions, groups.image
             FROM groups 
             INNER JOIN usersInGroup uIG on groups.id = uIG."group" 
             WHERE uIG.user = ?`,
@@ -379,7 +380,6 @@ app.get('/groups/:id/outstandingPayments', (req, res) => {
     );
 });
 
-// Get current sum of individuel members in the group
 // Get current sum of individual members in the group
 app.get('/groups/:id/:user/sum', (req, res) => {
     const groupId = req.params.id;

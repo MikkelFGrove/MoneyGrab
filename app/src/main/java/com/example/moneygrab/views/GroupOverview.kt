@@ -86,7 +86,8 @@ fun fetchGroups(user: User?): List<Group>{
         name = "Friends",
         users = setOf(userA, userB),
         expenses = mutableListOf(expense1),
-        messages = emptyArray(), // Empty as requested
+        messages = emptyArray(),
+        description = "What", // Empty as requested
         id = 1
     )
 
@@ -95,6 +96,7 @@ fun fetchGroups(user: User?): List<Group>{
         users = setOf(userC, userD),
         expenses = mutableListOf(expense2),
         messages = emptyArray(),
+        description = "What",
         id = 2
     )
 
@@ -103,6 +105,7 @@ fun fetchGroups(user: User?): List<Group>{
         users = setOf(userA, userB, userC, userD),
         expenses = mutableListOf(expense3),
         messages = emptyArray(),
+        description = "What",
         id = 3
     )
 

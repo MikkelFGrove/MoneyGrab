@@ -1,6 +1,6 @@
 package com.example.moneygrab
 
-import com.example.moneygrab.views.GroupData
+
 import com.example.moneygrab.views.User
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -26,3 +26,9 @@ interface APIEndpoints {
     suspend fun signup(
         @Body info: Map<String, String>): com.example.debtcalculator.data.User
 }
+
+data class GroupData (
+    val name: String,
+    val description: String,
+    val users: List<User>
+)

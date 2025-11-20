@@ -19,7 +19,7 @@ fun main() {
     val group = Group(
         "Group",
         setOf(userJoe, userJohn, userSonny),
-        mutableListOf(banankage, riskiks, skraldesække),
+        mutableListOf(banankage, riskiks, skraldesække), "Hell nah",
         arrayOf(),
         id = 1
         )
