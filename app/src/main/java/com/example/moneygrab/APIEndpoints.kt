@@ -59,6 +59,9 @@ interface APIEndpoints {
     @POST("/expenses")
     suspend fun createExpense(@Body body: Expense): Response<Int>
 
+    @POST("users")
+    suspend fun updateUser(@Body body: UpdateUser): Response<com.example.debtcalculator.data.User>
+
     @GET("/groups/{groupId}/expenses")
     suspend fun getExpensesInGroup(@Path("groupId") groupId: Int): Response<MutableList<ChatExpense>>
 
@@ -79,6 +82,13 @@ interface APIEndpoints {
     data class SignupData(
         val phoneNumber: String,
         val password: String,
+        val name: String,
+        val image: String?
+    )
+
+    data class UpdateUser (
+        val userId: Int,
+        val phoneNumber: String,
         val name: String,
         val image: String?
     )
