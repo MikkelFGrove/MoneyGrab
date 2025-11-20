@@ -16,7 +16,7 @@ object NotificationHelper {
     private const val CHANNEL_ID = "ch1"
 
     fun createChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "My Channel",
