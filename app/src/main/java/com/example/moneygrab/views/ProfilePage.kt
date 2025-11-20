@@ -2,7 +2,9 @@ package com.example.moneygrab.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.moneygrab.CurrentUser
 import com.example.moneygrab.R
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import com.example.moneygrab.components.openNotificationSettings
 
 
 @Composable
@@ -96,6 +99,29 @@ fun ProfilePage(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             color = Color.Gray
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { context.openNotificationSettings() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_notification_icon),
+                contentDescription = "Notification Icon",
+                modifier = Modifier.size(30.dp),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+
+            Text(
+                text = "Manage notifications",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
