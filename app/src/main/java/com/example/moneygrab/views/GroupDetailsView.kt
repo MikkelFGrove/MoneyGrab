@@ -60,7 +60,8 @@ class GroupDetailsViewModel() : ViewModel() {
             users = emptySet(),
             expenses = mutableListOf(),
             tabClosed = false,
-            messages = mutableListOf()
+            messages = mutableListOf(),
+            description = ""
         )
     )
 
@@ -122,7 +123,6 @@ fun GroupDetailsView(
 ){
     val context = LocalContext.current
     val groupDetailsViewModel: GroupDetailsViewModel = viewModel()
-    var groupName by groupDetailsViewModel.groupName
 
     LaunchedEffect(groupId) {
         groupDetailsViewModel.setUser(context)
@@ -132,11 +132,11 @@ fun GroupDetailsView(
     Column(modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally) {
         TopDetailsBar(
-            groupName = "Friends", //groupName,
+            groupName = groupDetailsViewModel.group.name,
             onBack = onBack
         )
         OutlinedTextField(
-            value = "this is a description of the group", // TODO change to actually fetch the description once backend has been set up
+            value = groupDetailsViewModel.group.description, // TODO change to actually fetch the description once backend has been set up
             onValueChange = {},
             label = { Text("Description") },
             readOnly = true,
