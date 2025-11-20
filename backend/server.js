@@ -207,6 +207,24 @@ app.post('/groups', (req, res) => {
     );
 });
 
+//Update group
+app.post('/update/groups', (req, res) => {
+    let {name, image, description, isClosed, id} = req.body;
+    db.run('UPDATE groups SET name = ?, image = ?, description = ?, isClosed = ? WHERE id = ?', 
+        [name, image, description, isClosed , id],
+    err => {
+        if(err) return res.status(500).json({error: err.message});
+    });
+    db.get('SELECT * FROM groups WHERE id = ?', 
+        [id],
+    (err, row) => {
+        
+        if(err) return res.status(500).json({error: err.message});
+        return res.json(row);
+    });
+});
+
+
 //Create new expense (This assumes that the payers is an array when being send to the backend)
 app.post('/expenses', (req, res) => {
     let { owner, group, description, amount, payers } = req.body;
@@ -279,6 +297,22 @@ app.post('/users', async (req, res) => {
         } catch (e) {
             return res.status(500).json({ error: e.message });
         }
+});
+
+// Update user
+app.post('/update/users', (req, res) => {
+    let {phoneNumber, name, image, id} = req.body;
+    db.run('UPDATE users SET phoneNumber = ?, name = ?, image = ? WHERE id = ?', 
+        [phoneNumber, name, image, id],
+    err => {
+        if(err) return res.status(500).json({error: err.message});
+    });
+    db.get('SELECT * FROM users WHERE id = ?', 
+        [id],
+    (err, row) => {
+        if(err) return res.status(500).json({error: err.message});
+        return res.json(row);
+    });
 });
 
 //Login user
