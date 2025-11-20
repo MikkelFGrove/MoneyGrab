@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
     private fun showPaymentNotification() {
         NotificationHelper.show(
             this,
-            "Missing Payment",
-            "KOM NU IND OG BETAL FORHELVEDE"
+            "Time to pay!",
+            "The tab has been closed in your group and requests everyone to pay their debts"
         )
     }
 }
