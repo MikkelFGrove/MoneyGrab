@@ -193,6 +193,19 @@ app.get('/groups/:id', (req, res) => {
         });
 });
 
+// Get users in a group
+app.get('/groups/:id/users', (req, res) => {
+    let {id } = req.params;
+    db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+        [id],
+        (err, rows) => {
+            if(err) return res.status(500).json({error: err.message});
+            if(!rows) return res.status(404).json({error: 'No users found within that group'});
+            res.json(rows);
+        }
+    )
+})
+
 //Create new group
 app.post('/groups', (req, res) => {
     let { name, image, isClosed} = req.body;
@@ -379,7 +392,6 @@ app.get('/groups/:id/outstandingPayments', (req, res) => {
     );
 });
 
-// Get current sum of individuel members in the group
 // Get current sum of individual members in the group
 app.get('/groups/:id/:user/sum', (req, res) => {
     const groupId = req.params.id;
@@ -392,7 +404,7 @@ app.get('/groups/:id/:user/sum', (req, res) => {
         (err, userRows) => {
             if (err) return res.status(500).json({ error: err.message });
 
-            const users = userRows.map(u => new User(u.id, u.phoneNumber, u.name, u.image));
+            const users = userRows.map(user => new User(user.id, user.phoneNumber, user.name, user.image));
 
             // Get all expenses in the group
             db.all('SELECT * FROM expenses WHERE "group" = ?', [groupId], (err2, expenseRows) => {
@@ -481,23 +493,28 @@ app.post('/closeGroup', (req, res) => {
     let { groupId } = req.body;
 
     //Closes the group
-    db.run('UPDATE groups SET isClosed = 1 WHERE id = ?', [groupId], async (err) => {
+    db.run('UPDATE groups SET isClosed = 1 WHERE id = ?', 
+        [groupId], 
+        async (err) => {
         if (err) return res.status(500).json({ error: err.message });
 
         try {
             //Get users in the group
             const userRows = await new Promise((resolve, reject) => {
-                db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)', [groupId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
+                db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+                    [groupId],
+                    (err, rows) => {
+                        if (err) reject(err);
+                        else resolve(rows);
+                    });
             });
 
-            const users = userRows.map(u => new User(u.id, u.phoneNumber, u.name, u.image));
+            const users = userRows.map(user => new User(user.id, user.phoneNumber, user.name, user.image));
 
             // Get expenses in the group
             const expenseRows = await new Promise((resolve, reject) => {
-                db.all('SELECT * FROM expenses WHERE "group" = ?', [groupId], (err, rows) => {
+                db.all('SELECT * FROM expenses WHERE "group" = ?',
+                    [groupId], (err, rows) => {
                     if (err) reject(err);
                     else resolve(rows);
                 });
@@ -511,18 +528,20 @@ app.post('/closeGroup', (req, res) => {
             let expenses = [];
             for (const expense of expenseRows) {
                 const payerRows = await new Promise((resolve, reject) => {
-                    db.all('SELECT user FROM payersInExpense WHERE expense = ?', [expense.id], (err, rows) => {
-                        if (err) reject(err);
-                        else resolve(rows);
-                    });
+                    db.all('SELECT user FROM payersInExpense WHERE expense = ?',
+                        [expense.id],
+                        (err, rows) => {
+                            if (err) reject(err);
+                            else resolve(rows);
+                        });
                 });
 
-                const payerUsers = payerRows.map(p => {
-                    const found = userRows.find(u => u.id === p.user);
+                const payerUsers = payerRows.map(payer => {
+                    const found = userRows.find(user => user.id === payer.user);
                     return new User(found.id, found.phoneNumber, found.name, found.image);
                 });
 
-                const ownerRow = userRows.find(u => u.id === expense.owner);
+                const ownerRow = userRows.find(user => user.id === expense.owner);
                 const lender = new User(ownerRow.id, ownerRow.phoneNumber, ownerRow.name, ownerRow.image);
 
                 expenses.push(new Expense(expense.amount, expense.description, lender, payerUsers));
@@ -537,7 +556,7 @@ app.post('/closeGroup', (req, res) => {
                 return res.json({ message: "Group is closed. No transactions needed." });
             }
 
-            //  Insert transactions into DB
+            //  Insert transactions into the database
             for (let transactionz of transactions) {
                 let transactionId = await new Promise((resolve, reject) => {
                     db.run(
