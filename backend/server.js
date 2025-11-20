@@ -205,10 +205,10 @@ app.get('/expenses/:id', (req, res) => {
 //Create new expense (This assumes that the payers is an array when being send to the backend)
 app.post('/expenses', (req, res) => {
     const { owner, group, description, amount, payers } = req.body;
-
+    console.log(req.body)
     db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp)
             VALUES (?,?,?,?, CURRENT_TIMESTAMP)`,
-        [owner, group, description, amount],
+        [owner.id, group, description, amount],
     function(err) {
         if(err) return res.status(500).json({err: err.message});
 
@@ -216,7 +216,7 @@ app.post('/expenses', (req, res) => {
         const payerList = payers.length > 0 ? payers: [owner];
 
         const sqlStatement = db.prepare('INSERT INTO payersInExpense (user, expense) VALUES (?, ?)');
-        payerList.forEach(user => sqlStatement.run(user, expenseId));
+        payerList.forEach(user => sqlStatement.run(user.id, expenseId));
         sqlStatement.finalize((err) => {
             if(err) {
                 return res.status(500).json({error: err});
@@ -226,6 +226,19 @@ app.post('/expenses', (req, res) => {
         });
     });
 });
+
+// Get users in a group
+app.get('/groups/:id/users', (req, res) => {
+    let {id } = req.params;
+    db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+        [id],
+        (err, rows) => {
+            if(err) return res.status(500).json({error: err.message});
+            if(!rows) return res.status(404).json({error: 'No users found within that group'});
+            res.json(rows);
+        }
+    )
+})
 
 
 //Create new transaction
@@ -343,11 +356,9 @@ app.get('/users/:id/groups', (req, res) => {
 //Get expenses on a group
 app.get('/groups/:id/expenses', (req, res) => {
   const { id } = req.params;
-  db.all(
-    `SELECT expense.id, expense.owner, expense."group", expense.description, expense.amount, expense.timeStamp
-     FROM expenses expense
-     INNER JOIN payersInExpense pIE on expense.id = pIE.expense
-     WHERE expense."group" = ?`,
+  db.all(`SELECT id, owner, "group", description, amount, timeStamp
+          FROM expenses expense
+          WHERE expense."group" = ?`,
     [id],
     (err, rows) => {
       if (err) return res.status(500).json({ err: err.message });

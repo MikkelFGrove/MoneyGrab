@@ -56,6 +56,8 @@ class ChatViewModel() : ViewModel() {
 
     fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
+            var g: Group? = null
+
             val response = try {
                 api.getGroup(groupId)
             } catch (e: Exception) {
@@ -70,21 +72,39 @@ class ChatViewModel() : ViewModel() {
             } else {
                 response.body()?.let {
                     println("Group: ${it}")
-                    group = it
+                    g = it
                 }
             }
 
-            /*val expenses = try {
-                api.getExpensesInGroup(group.id)
-            } catch (e: Exception) {
-                println(e.message)
-                null
-            }
+            g?.let {
+                val expenses = try {
+                    api.getExpensesInGroup(it.id)
+                } catch (e: Exception) {
+                    println(e.message)
+                    null
+                }
 
-            expenses?.let { e ->
-                println("Expenses: ${e}")
-                group.expenses = e
-            }*/
+                expenses?.body()?.let { e ->
+                    var updatedExpenses: MutableList<Expense> = mutableListOf()
+                    println("Expenses: ${e}")
+                    for (expense: APIEndpoints.ChatExpense in e) {
+                        updatedExpenses.add(Expense(
+                            expense.id,
+                            expense.amount,
+                            expense.description,
+                            expense.group,
+                            User(
+                                expense.owner,
+                                "",
+                                "",
+                                ""
+                            ),
+                            mutableListOf()))
+                    }
+                    it.expenses = updatedExpenses
+                }
+                group = it
+            }
 
             println("Number of expenses: ${group.expenses}")
         }
@@ -94,7 +114,7 @@ class ChatViewModel() : ViewModel() {
         viewModelScope.launch {
             user?.let {
                 val response = try {
-                    api.getAmountOwed(group.id, it.phoneNumber)
+                    api.getAmountOwed(group.id, it.id)
                 } catch (e: Exception) {
                     null
                 }
@@ -168,7 +188,7 @@ fun TopBar(groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDeb
                         .defaultMinSize(minWidth = 3.dp, minHeight = 3.dp)
 
                 ) {
-                    Text(calculatedSum.toString() +  "DKK", color = color)
+                    Text("$calculatedSum DKK", color = color)
                 }
             }
             Text(
@@ -185,13 +205,13 @@ fun TopBar(groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDeb
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
     //This needs to be implemented again when login authcontext is up and running
-     val bubbleColor = if (moneyRequest.owner.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
+     val bubbleColor = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) {
         colors.primary
     } else {
         colors.primary.copy(alpha = 0.2f)
     }
 
-    val textColor = if (moneyRequest.owner.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) {
+    val textColor = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) {
         Color.White
     } else {
         Color.Black
@@ -200,7 +220,7 @@ fun Bubbles(moneyRequest: Expense) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp, horizontal = 10.dp),
-        horizontalArrangement = if (moneyRequest.owner.phoneNumber == CurrentUser(LocalContext.current).getUser()?.phoneNumber) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) Arrangement.End else Arrangement.Start
     ) {
         Surface(
             color = bubbleColor,

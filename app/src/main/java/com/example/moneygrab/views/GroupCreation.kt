@@ -61,17 +61,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.debtcalculator.data.User
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 import retrofit2.Response
-
-data class User (
-    val name: String,
-    val phoneNumber: Number
-)
 
 class GroupViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()

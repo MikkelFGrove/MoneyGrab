@@ -91,8 +91,8 @@ class ConfirmPaymentModelView() : ViewModel() {
     fun getSum(context: Context, groupId: Int){
         viewModelScope.launch {
             val response = try {
-                api.getAmountOwed(groupId = groupId, userPhone = CurrentUser(context).getUser()?.phoneNumber
-                    ?: "-1")
+                api.getAmountOwed(groupId = groupId, userId = CurrentUser(context).getUser()?.id
+                    ?: -1)
             } catch (e: Exception) {
                 println(e.message)
                 errorMessage.value = "An error has occurred"

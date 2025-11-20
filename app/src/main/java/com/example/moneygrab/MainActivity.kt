@@ -23,7 +23,6 @@ import com.example.moneygrab.views.SignUpScreen
 
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddExpenseView
-import com.example.moneygrab.views.AddPayersView
 import com.example.moneygrab.views.ConfirmPaymentPage
 
 import com.example.moneygrab.views.GroupCreationView
@@ -107,7 +106,7 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     AddExpenseView(
                         groupId = groupId,
-                        addToExpense = { expense -> navController.navigate("addToExpense/${expense?.id}") },
+                        onCreateExpense = { group -> navController.navigate("groupChat/${group?.id}") },
                         back = { navController.popBackStack() }
                     )
                 }
@@ -119,19 +118,6 @@ fun NavManager() {
                         //onEditClick = { },
                     )
                 }
-
-                composable(
-                    "addToExpense/{expenseId}", arguments = listOf(
-                    navArgument("expenseId") { type = NavType.IntType }
-                )) { backStackEntry ->
-                    val expenseId = backStackEntry.arguments?.getInt("expenseId") ?: 1
-                    AddPayersView(
-                        expenseId = expenseId,
-                        onAddExpense = { group -> navController.navigate("groupChat/${group.id}") },
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
 
                 composable("groupCreation") {
                     GroupCreationView(
