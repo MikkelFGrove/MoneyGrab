@@ -10,6 +10,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,7 +68,7 @@ class ProfilePageViewModel() : ViewModel() {
             } else {
                 response.body()?.let {
                     CurrentUser(context).saveUser(it)
-                    editMode.value = true
+                    editMode.value = false
                 }
             }
         }
@@ -82,8 +84,11 @@ fun ProfilePage(
 ) {
     val context = LocalContext.current
     val profilePageViewModel: ProfilePageViewModel = viewModel()
-    profilePageViewModel.getUser(context)
-
+    LaunchedEffect(CurrentUser(context).getUser()) {
+        profilePageViewModel.getUser(context)
+    }
+    var name by profilePageViewModel.name
+    var phone by profilePageViewModel.phoneNumber
 
     Column(
         modifier = Modifier
@@ -135,16 +140,16 @@ fun ProfilePage(
         // Takes parameters fullName, phoneNumber
         if (profilePageViewModel.editMode.value) {
             OutlinedTextField(
-                value = profilePageViewModel.name.value,
-                onValueChange = { profilePageViewModel.name.value = it },
+                value = name,
+                onValueChange = { name = it },
                 label = { Text("Phone number") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                value = profilePageViewModel.phoneNumber.value,
-                onValueChange = { profilePageViewModel.phoneNumber.value = it },
+                value = phone,
+                onValueChange = { phone = it },
                 label = { Text("Phone number") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -195,7 +200,6 @@ fun ProfilePage(
             Button(
                 onClick = {
                     profilePageViewModel.saveUser(context)
-                    profilePageViewModel.editMode.value = !profilePageViewModel.editMode.value
                 },
                 modifier = Modifier
                     .fillMaxWidth()
