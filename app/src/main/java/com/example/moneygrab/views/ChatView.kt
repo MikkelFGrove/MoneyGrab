@@ -132,7 +132,7 @@ class ChatViewModel() : ViewModel() {
     fun closeTab() {
         viewModelScope.launch {
             val response = try {
-                api.closeTab(group.id)
+                api.closeTab(APIEndpoints.CloseTab(groupId = group.id))
             } catch (e: Exception) {
                 null
             }
@@ -382,7 +382,10 @@ fun DialogCloseTheTab(
                         Text("No")
                     }
                     TextButton(
-                        onClick = { onConfirmation(group) },
+                        onClick = {
+                            onConfirmation(group)
+
+                                  },
                         modifier = Modifier.padding(8.dp),
                     ) {
                         Text("Close Tab")

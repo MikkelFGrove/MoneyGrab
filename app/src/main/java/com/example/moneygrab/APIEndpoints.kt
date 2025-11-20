@@ -2,6 +2,8 @@ package com.example.moneygrab
 
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
+import com.example.debtcalculator.data.Message
+import com.example.debtcalculator.data.Transaction
 import com.example.debtcalculator.data.User
 import retrofit2.Response
 import retrofit2.http.Body
@@ -41,8 +43,8 @@ interface APIEndpoints {
     @GET("groups/{id}")
     suspend fun getGroup(@Path("id") id: Int): Response<Group>
 
-    @POST("groups/{id}/closetab")
-    suspend fun closeTab(@Path("id") id: Int): Response<Int>
+    @POST("closeGroup")
+    suspend fun closeTab(@Body body: CloseTab): Response<CloseTabResponse>
 
     @GET("/groups/{groupId}/{userId}/sum")
     suspend fun getAmountOwed(
@@ -67,6 +69,15 @@ interface APIEndpoints {
 
     @GET("/groups/{groupId}/users")
     suspend fun getUsersInGroup(@Path("groupId") groupId: Int): Response<MutableSet<User>>
+
+
+    data class CloseTabResponse(
+        val message: String,
+        val transactions: List<Transaction>
+    )
+    data class CloseTab(
+        val groupId: Int
+    )
 
     data class LoginData(
         val phoneNumber: String,
