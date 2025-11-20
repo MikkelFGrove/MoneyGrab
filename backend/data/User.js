@@ -8,6 +8,7 @@ class User {
 
     toJSON() {
         return {
+            id: this.id,
             phoneNumber: this.phoneNumber,
             name: this.name,
             image: this.image
