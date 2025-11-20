@@ -145,8 +145,9 @@ class ChatViewModel() : ViewModel() {
 }
 
 @Composable
-fun TopBar(groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDebt: () -> Unit) {
+fun TopBar(group: Group, groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDebt: () -> Unit, onName: (Group) -> Unit) {
     var color: Color
+    val group = group
     if (calculatedSum < 0){
         color = Color.Red
     } else if(calculatedSum > 0) {
@@ -194,12 +195,15 @@ fun TopBar(groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDeb
                     Text("$calculatedSum DKK", color = color)
                 }
             }
-            Text(
+            TextButton(
+                modifier = Modifier.align(Alignment.Center),
+                onClick = { onName(group) }){
+                Text(
                 text = groupName,
                 fontSize = MaterialTheme.typography.titleLarge.fontSize,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center)
-            )
+                )
+            }
         }
     }
 }
@@ -289,7 +293,9 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
 }
 
 @Composable
-fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit, onNotifyUsers: () -> Unit) {
+fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
+               onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit,
+               onName: (Group) -> Unit, onNotifyUsers: () -> Unit) {
     val chatViewModel: ChatViewModel = viewModel()
     var showCloseDialog by chatViewModel.showCloseDialog
     var amountOwed by chatViewModel.amountOwed
@@ -305,8 +311,10 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit, onBack: () -> Unit = {
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
+            group = chatViewModel.group,
             groupName = groupName,
             calculatedSum = amountOwed,
+            onName = onName,
             onBack = onBack,
             onPayDebt = {
                 showCloseDialog = true

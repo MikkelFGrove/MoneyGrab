@@ -12,3 +12,4 @@ gradle/
 backend/node_modules
 
 local.properties
+.kotlin/

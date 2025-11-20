@@ -31,6 +31,8 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import com.example.moneygrab.views.AddExpenseView
 import com.example.moneygrab.views.ConfirmPaymentPage
 import com.example.moneygrab.views.GroupCreationView
+import com.example.moneygrab.views.GroupDetailsView
+import com.example.moneygrab.views.GroupDetailsViewModel
 import com.example.moneygrab.views.GroupPage
 import com.example.moneygrab.views.ProfilePage
 
@@ -138,7 +140,8 @@ fun NavManager() {
                         },
                         onNotifyUsers = {
                             activity?.notifyUsers()
-                        }
+                        },
+                        onName = { group -> navController.navigate("groupDetails/${group.id}")}
                     )
                 }
 
@@ -179,6 +182,17 @@ fun NavManager() {
                         navigation = { navController.navigate("groupChat/$groupId")}
                     )
                 }
+
+                composable("groupDetails/{groupId}", arguments = listOf(
+                    navArgument("groupId") { type = NavType.IntType }
+                )) { backStackEntry ->
+                    val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
+                    GroupDetailsView(
+                        groupId = groupId,
+                        onBack = {navController.popBackStack() },
+                    )
+                }
+
             }
         }
 }
