@@ -58,17 +58,25 @@ private fun fetchGroup(id: Int): Group?{
 
 class ConfirmPaymentModelView() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
+    var user: User? = null
+    var amountOwed = mutableFloatStateOf(0f)
     var errorHasOccurred = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
-    var group: Group = Group(
+    var group: Group by mutableStateOf(Group(
         id = -1,
         name = "",
-        users = emptySet<User>(),
-        expenses = emptyList<Expense>() as MutableList<Expense>,
+        users = emptySet(),
+        expenses = mutableListOf(),
         tabClosed = false,
         description = "",
-        messages = emptyList<Message>()
-    )
+        messages = mutableListOf()
+    ))
+
+    fun setUser(context: Context) {
+        CurrentUser(context).getUser()?.let {
+            user = it
+        }
+    }
 
     fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
@@ -89,32 +97,31 @@ class ConfirmPaymentModelView() : ViewModel() {
         }
     }
     var sum = mutableStateOf(0f)
-    fun getSum(context: Context, groupId: Int){
+    fun getSum( groupId: Int){
+        println(groupId.toString() + "<<<<<<<<<<<<<<<<<<<<<<")
         viewModelScope.launch {
-            val response = try {
-                api.getAmountOwed(groupId = groupId, userId = CurrentUser(context).getUser()?.id
-                    ?: -1)
-            } catch (e: Exception) {
-                println(e.message)
-                errorMessage.value = "An error has occurred"
-                errorHasOccurred.value = true
-                null
-            }
-
-            if (response?.isSuccessful ?: false) {
-                response.body()?.let {
-                    sum.value = it.amount
+            user?.let {
+                val response = try {
+                    api.getAmountOwed(groupId, it.id)
+                } catch (e: Exception) {
+                    println(e.message)
+                    null
                 }
-            } else {
-                errorMessage.value = "Not enough funds"
-                errorHasOccurred.value = true
+                println(groupId + it.id)
+                response?.body()?.let {
+                    println(it)
+                    amountOwed.floatValue = it.amount
+                }
             }
         }
     }
     fun payTransaction(navigation: (Group) -> Unit, context: Context){
         viewModelScope.launch {
             val response = try {
-                api.payTransaction(groupId = group.id, userId = CurrentUser(context).getUser()?.phoneNumber?: "")
+                api.payTransactions(APIEndpoints.PayTransactionsRequest(
+                    groupId = group.id,
+                    userId = CurrentUser(context).getUser()?.id ?: -1
+                ))
             } catch (e: Exception) {
                 println(e.message)
                 errorMessage.value = "An error has occurred"
@@ -146,11 +153,11 @@ fun ConfirmPaymentPage(
 
     LaunchedEffect(groupId) {
         confirmPaymentModelView.fetchGroupData(groupId)
-        confirmPaymentModelView.getSum(context, groupId)
+        confirmPaymentModelView.getSum(groupId)
+        confirmPaymentModelView.setUser(context)
     }
 
     val groupName = confirmPaymentModelView.group.name
-    val debt = getSum(currentUser, confirmPaymentModelView.group)
     //State hoisting for the slider
     var isLoading by remember { mutableStateOf(false) }
 
@@ -206,14 +213,14 @@ fun ConfirmPaymentPage(
                         .padding(horizontal = 28.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = groupName,
+                        text = confirmPaymentModelView.group.name,
                         style = MaterialTheme.typography.labelLarge.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
                 Text(
-                    text = "${debt} kr",
+                    text = "${confirmPaymentModelView.amountOwed.value} kr",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = accent,
