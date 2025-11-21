@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -27,13 +26,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.debtcalculator.data.Group
 import com.example.debtcalculator.data.User
 import com.example.authentication.CurrentUser
-import com.example.debtcalculator.data.Expense
-import com.example.debtcalculator.data.Message
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.components.SlideToUnlock
-import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -69,9 +65,10 @@ class ConfirmPaymentModelView() : ViewModel() {
         name = "",
         users = emptySet(),
         expenses = mutableListOf(),
-        tabClosed = false,
+        isClosed = false,
         description = "",
-        messages = mutableListOf()
+        messages = mutableListOf(),
+        tabClosed = false
     ))
 
     fun setUser(context: Context) {
@@ -99,8 +96,7 @@ class ConfirmPaymentModelView() : ViewModel() {
         }
     }
     var sum = mutableStateOf(0f)
-    fun getSum( groupId: Int){
-        println(groupId.toString() + "<<<<<<<<<<<<<<<<<<<<<<")
+    fun getSum(groupId: Int) {
         viewModelScope.launch {
             user?.let {
                 val response = try {
@@ -109,7 +105,6 @@ class ConfirmPaymentModelView() : ViewModel() {
                     println(e.message)
                     null
                 }
-                println(groupId + it.id)
                 response?.body()?.let {
                     println(it)
                     amountOwed.floatValue = it.amount
@@ -118,7 +113,6 @@ class ConfirmPaymentModelView() : ViewModel() {
         }
     }
     fun payTransaction(navigation: (Group) -> Unit, context: Context){
-        println("WHAT THE HELLY")
         viewModelScope.launch {
             isLoading.value = true
             val response = try {
@@ -161,8 +155,8 @@ fun ConfirmPaymentPage(
 
     LaunchedEffect(groupId) {
         confirmPaymentModelView.fetchGroupData(groupId)
-        confirmPaymentModelView.getSum(groupId)
         confirmPaymentModelView.setUser(context)
+        confirmPaymentModelView.getSum(groupId)
     }
 
     val groupName = confirmPaymentModelView.group.name
@@ -227,7 +221,7 @@ fun ConfirmPaymentPage(
                     )
                 }
                 Text(
-                    text = "${confirmPaymentModelView.amountOwed.value} kr",
+                    text = "${confirmPaymentModelView.amountOwed.floatValue} kr",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = accent,

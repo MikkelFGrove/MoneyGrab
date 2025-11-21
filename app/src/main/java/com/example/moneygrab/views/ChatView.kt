@@ -39,9 +39,10 @@ class ChatViewModel() : ViewModel() {
         name = "",
         users = emptySet(),
         expenses = mutableListOf(),
-        tabClosed = false,
+        isClosed = false,
         description = "",
-        messages = mutableListOf()
+        messages = mutableListOf(),
+        tabClosed = false
     ))
     var amountOwed = mutableFloatStateOf(0f)
     var messages = mutableStateListOf<Message>()
@@ -66,6 +67,7 @@ class ChatViewModel() : ViewModel() {
                 errorHappened.value = true
                 null
             }
+            println(response)
 
             if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "The phone number or password is incorrect"
@@ -76,6 +78,8 @@ class ChatViewModel() : ViewModel() {
                     g = it
                 }
             }
+
+            println(g)
 
             g?.let { g ->
                 val expenses = try {
@@ -142,8 +146,10 @@ class ChatViewModel() : ViewModel() {
                 println(response)
                 println("SIGMA")
                 if (amountOwed.value > 0) {
+                    fetchGroupData(groupId = group.id)
                     onConfirmation(group)
                 } else {
+                    fetchGroupData(groupId = group.id)
                     showCloseDialog.value = false
                 }
 
@@ -156,7 +162,7 @@ class ChatViewModel() : ViewModel() {
 fun DialogCloseTheTab(
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit,
-    group: Group
+    chatViewModel: ChatViewModel
 ) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
@@ -228,7 +234,12 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
             onName = onName,
             onBack = onBack,
             onPayDebt = {
-                showCloseDialog = true
+                if (!chatViewModel.group.isClosed){
+                    showCloseDialog = true
+                } else  if(chatViewModel.amountOwed.value > 0) {
+                    onConfirmation(chatViewModel.group)
+                }
+
             }
         )
 
@@ -239,7 +250,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
                 .fillMaxWidth()
         )
 
-        InputBar(onNotifyUsers, addExpense, chatViewModel.group, chatViewModel = chatViewModel)
+        InputBar(onNotifyUsers, addExpense, chatViewModel = chatViewModel)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
@@ -251,7 +262,8 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
                         onConfirmation(closedGroup)
                     }
                 },
-                group = chatViewModel.group
+                chatViewModel = chatViewModel
+
             )
         }
     }
@@ -366,7 +378,7 @@ fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
     }
 }
 @Composable
-fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Group, chatViewModel: ChatViewModel) {
+fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewModel: ChatViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
     ) {
@@ -375,24 +387,23 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (chatViewModel.group.tabClosed){
+                if (chatViewModel.group.isClosed){
                     Button(
                         onClick = { onNotifyUsers() },
-                        modifier = Modifier,
-                        shape = RoundedCornerShape(5.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(5.dp),
 
                     ) {
-                        Text("Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                        Text("Group Close - Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
                     }
                 } else {
                     Button(
-                        onClick = { addExpense(group) },
-                        modifier = Modifier,
+                        onClick = { addExpense(chatViewModel.group) },
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(5.dp)
                     ) {
                         Text("Add Expense", fontSize = MaterialTheme.typography.titleLarge.fontSize)

@@ -15,7 +15,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -59,9 +58,10 @@ class GroupDetailsViewModel() : ViewModel() {
             name = "",
             users = emptySet(),
             expenses = mutableListOf(),
-            tabClosed = false,
+            isClosed = false,
             messages = mutableListOf(),
-            description = ""
+            description = "",
+            tabClosed = false
         )
     )
 
