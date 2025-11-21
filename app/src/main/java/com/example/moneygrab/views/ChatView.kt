@@ -129,124 +129,17 @@ class ChatViewModel() : ViewModel() {
         }
     }
 
-    fun closeTab(onConfirmation: (Group) -> Unit) {
+    fun closeTab() {
         viewModelScope.launch {
             val response = try {
                 api.closeTab(APIEndpoints.CloseTab(groupId = group.id))
             } catch (e: Exception) {
                 null
             }
-            println("HOLY MOLY" + response)
 
-            if (response?.isSuccessful?: false) {
-                println("SIGMA")
-                onConfirmation(group)
+            response?.let {
+                fetchGroupData(group.id)
             }
-        }
-    }
-}
-
-@Composable
-fun DialogCloseTheTab(
-    onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    group: Group
-) {
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(250.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "Do you wish to close the tab? \n" +
-                            "No more expenses can be added before all members " +
-                            "have paid their debts.",
-                    modifier = Modifier.padding(5.dp),
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    TextButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("No")
-                    }
-                    TextButton(
-                        onClick = {
-                            onConfirmation()
-                        },
-                        modifier = Modifier.padding(8.dp),
-                    ) {
-                        Text("Close Tab")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
-               onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit,
-               onName: (Group) -> Unit, onNotifyUsers: () -> Unit) {
-    val chatViewModel: ChatViewModel = viewModel()
-    var showCloseDialog by chatViewModel.showCloseDialog
-    var amountOwed by chatViewModel.amountOwed
-    var groupName = chatViewModel.group.name
-    var expenses = chatViewModel.group.expenses
-    var context = LocalContext.current
-
-    LaunchedEffect(groupId) {
-        chatViewModel.setUser(context)
-        chatViewModel.fetchGroupData(groupId)
-        chatViewModel.fetchAmountOwed(groupId)
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopBar(
-            group = chatViewModel.group,
-            groupName = groupName,
-            calculatedSum = amountOwed,
-            onName = onName,
-            onBack = onBack,
-            onPayDebt = {
-                showCloseDialog = true
-            }
-        )
-
-        MessagesList(
-            messages = expenses,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        )
-
-        InputBar(onNotifyUsers, addExpense, chatViewModel.group)
-
-        if (showCloseDialog) {
-            DialogCloseTheTab(
-                onDismissRequest = { showCloseDialog = false },
-                onConfirmation = {
-                    println("WHAAAT")
-                    showCloseDialog = false
-                    chatViewModel.closeTab { closedGroup ->
-                        onConfirmation(closedGroup)
-                    }
-                },
-                group = chatViewModel.group
-            )
         }
     }
 }
@@ -314,6 +207,8 @@ fun TopBar(group: Group, groupName: String, calculatedSum: Float, onBack: () -> 
         }
     }
 }
+
+
 @Composable
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
@@ -348,6 +243,8 @@ fun Bubbles(moneyRequest: Expense) {
         }
     }
 }
+
+
 @Composable
 fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
     LazyColumn(
@@ -359,6 +256,7 @@ fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
         }
     }
 }
+
 @Composable
 fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Group) {
     Surface(
@@ -394,8 +292,109 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
     }
 }
 
+@Composable
+fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
+               onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit,
+               onName: (Group) -> Unit, onNotifyUsers: () -> Unit) {
+    val chatViewModel: ChatViewModel = viewModel()
+    var showCloseDialog by chatViewModel.showCloseDialog
+    var amountOwed by chatViewModel.amountOwed
+    var groupName = chatViewModel.group.name
+    var expenses = chatViewModel.group.expenses
+    var context = LocalContext.current
 
+    LaunchedEffect(groupId) {
+        chatViewModel.setUser(context)
+        chatViewModel.fetchGroupData(groupId)
+        chatViewModel.fetchAmountOwed(groupId)
+    }
 
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopBar(
+            group = chatViewModel.group,
+            groupName = groupName,
+            calculatedSum = amountOwed,
+            onName = onName,
+            onBack = onBack,
+            onPayDebt = {
+                showCloseDialog = true
+            }
+        )
+
+        MessagesList(
+            messages = expenses,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        )
+
+        InputBar(onNotifyUsers, addExpense, chatViewModel.group)
+
+        if (showCloseDialog) {
+            DialogCloseTheTab(
+                onDismissRequest = { showCloseDialog = false },
+                onConfirmation = {
+                    showCloseDialog = false
+                    chatViewModel.closeTab()
+                    onConfirmation
+                },
+                group = chatViewModel.group
+            )
+        }
+    }
+}
+
+@Composable
+fun DialogCloseTheTab(
+    onDismissRequest: () -> Unit,
+    onConfirmation: (Group) -> Unit,
+    group: Group
+) {
+    Dialog(onDismissRequest = { onDismissRequest() }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Do you wish to close the tab? \n" +
+                            "No more expenses can be added before all members " +
+                            "have paid their debts.",
+                    modifier = Modifier.padding(5.dp),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    TextButton(
+                        onClick = { onDismissRequest() },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("No")
+                    }
+                    TextButton(
+                        onClick = {
+                            onConfirmation(group)
+
+                                  },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Text("Close Tab")
+                    }
+                }
+            }
+        }
+    }
+}
 /*
 @Preview(showBackground = true)
 @Composable

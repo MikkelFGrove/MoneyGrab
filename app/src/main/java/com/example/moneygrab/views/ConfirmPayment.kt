@@ -58,25 +58,17 @@ private fun fetchGroup(id: Int): Group?{
 
 class ConfirmPaymentModelView() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
-    var user: User? = null
-    var amountOwed = mutableFloatStateOf(0f)
     var errorHasOccurred = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
-    var group: Group by mutableStateOf(Group(
+    var group: Group = Group(
         id = -1,
         name = "",
-        users = emptySet(),
-        expenses = mutableListOf(),
+        users = emptySet<User>(),
+        expenses = emptyList<Expense>() as MutableList<Expense>,
         tabClosed = false,
         description = "",
-        messages = mutableListOf()
-    ))
-
-    fun setUser(context: Context) {
-        CurrentUser(context).getUser()?.let {
-            user = it
-        }
-    }
+        messages = emptyList<Message>()
+    )
 
     fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
@@ -97,31 +89,32 @@ class ConfirmPaymentModelView() : ViewModel() {
         }
     }
     var sum = mutableStateOf(0f)
-    fun getSum( groupId: Int){
-        println(groupId.toString() + "<<<<<<<<<<<<<<<<<<<<<<")
+    fun getSum(context: Context, groupId: Int){
         viewModelScope.launch {
-            user?.let {
-                val response = try {
-                    api.getAmountOwed(groupId, it.id)
-                } catch (e: Exception) {
-                    println(e.message)
-                    null
+            val response = try {
+                api.getAmountOwed(groupId = groupId, userId = CurrentUser(context).getUser()?.id
+                    ?: -1)
+            } catch (e: Exception) {
+                println(e.message)
+                errorMessage.value = "An error has occurred"
+                errorHasOccurred.value = true
+                null
+            }
+
+            if (response?.isSuccessful ?: false) {
+                response.body()?.let {
+                    sum.value = it.amount
                 }
-                println(groupId + it.id)
-                response?.body()?.let {
-                    println(it)
-                    amountOwed.floatValue = it.amount
-                }
+            } else {
+                errorMessage.value = "Not enough funds"
+                errorHasOccurred.value = true
             }
         }
     }
     fun payTransaction(navigation: (Group) -> Unit, context: Context){
         viewModelScope.launch {
             val response = try {
-                api.payTransactions(APIEndpoints.PayTransactionsRequest(
-                    groupId = group.id,
-                    userId = CurrentUser(context).getUser()?.id ?: -1
-                ))
+                api.payTransaction(groupId = group.id, userId = CurrentUser(context).getUser()?.phoneNumber?: "")
             } catch (e: Exception) {
                 println(e.message)
                 errorMessage.value = "An error has occurred"
@@ -144,7 +137,7 @@ class ConfirmPaymentModelView() : ViewModel() {
 fun ConfirmPaymentPage(
     modifier: Modifier = Modifier,
     groupId: Int,
-    navigation: () -> Unit
+    navigation: () -> npUnit
 ) {
 
     val context = LocalContext.current
@@ -153,11 +146,11 @@ fun ConfirmPaymentPage(
 
     LaunchedEffect(groupId) {
         confirmPaymentModelView.fetchGroupData(groupId)
-        confirmPaymentModelView.getSum(groupId)
-        confirmPaymentModelView.setUser(context)
+        confirmPaymentModelView.getSum(context, groupId)
     }
 
     val groupName = confirmPaymentModelView.group.name
+    val debt = getSum(currentUser, confirmPaymentModelView.group)
     //State hoisting for the slider
     var isLoading by remember { mutableStateOf(false) }
 
@@ -213,14 +206,14 @@ fun ConfirmPaymentPage(
                         .padding(horizontal = 28.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = confirmPaymentModelView.group.name,
+                        text = groupName,
                         style = MaterialTheme.typography.labelLarge.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
                 Text(
-                    text = "${confirmPaymentModelView.amountOwed.value} kr",
+                    text = "${debt} kr",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = accent,
