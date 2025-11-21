@@ -140,6 +140,7 @@ class ConfirmPaymentModelView() : ViewModel() {
             } else {
                 isLoading.value = false
                 navigation(group)
+                print(response.body())
                 println(group)
             }
         }

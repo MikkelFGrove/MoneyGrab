@@ -139,8 +139,14 @@ class ChatViewModel() : ViewModel() {
             println("HOLY MOLY" + response)
 
             if (response?.isSuccessful?: false) {
+                println(response)
                 println("SIGMA")
-                onConfirmation(group)
+                if (amountOwed.value > 0) {
+                    onConfirmation(group)
+                } else {
+                    showCloseDialog.value = false
+                }
+
             }
         }
     }
@@ -218,7 +224,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
         TopBar(
             group = chatViewModel.group,
             groupName = groupName,
-            calculatedSum = amountOwed,
+            chatViewModel = chatViewModel,
             onName = onName,
             onBack = onBack,
             onPayDebt = {
@@ -233,7 +239,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
                 .fillMaxWidth()
         )
 
-        InputBar(onNotifyUsers, addExpense, chatViewModel.group)
+        InputBar(onNotifyUsers, addExpense, chatViewModel.group, chatViewModel = chatViewModel)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
@@ -252,13 +258,13 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
 }
 
 @Composable
-fun TopBar(group: Group, groupName: String, calculatedSum: Float, onBack: () -> Unit, onPayDebt: () -> Unit, onName: (Group) -> Unit) {
+fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack: () -> Unit, onPayDebt: () -> Unit, onName: (Group) -> Unit) {
     var color: Color
     val group = group
-    if (calculatedSum < 0){
-        color = Color.Red
-    } else if(calculatedSum > 0) {
-        color = Color.Green
+    if (chatViewModel.amountOwed.value > 0){
+        color = Color(235, 54, 54)
+    } else if(chatViewModel.amountOwed.value < 0) {
+        color = Color(187, 227, 93)
     } else {
         color = Color.White
     }
@@ -299,7 +305,7 @@ fun TopBar(group: Group, groupName: String, calculatedSum: Float, onBack: () -> 
                         .defaultMinSize(minWidth = 3.dp, minHeight = 3.dp)
 
                 ) {
-                    Text("$calculatedSum DKK", color = color)
+                    Text("${chatViewModel.amountOwed.value} DKK", color = color)
                 }
             }
             TextButton(
@@ -360,7 +366,7 @@ fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
     }
 }
 @Composable
-fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Group) {
+fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Group, chatViewModel: ChatViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
     ) {
@@ -374,21 +380,26 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, group: Grou
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(
-                    onClick = { addExpense(group) },
-                    modifier = Modifier,
-                    shape = RoundedCornerShape(5.dp)
-                ) {
-                    Text("Add Expense", fontSize = MaterialTheme.typography.titleLarge.fontSize)
-                }
-                Button(
-                    onClick = { onNotifyUsers() },
-                    modifier = Modifier,
-                    shape = RoundedCornerShape(5.dp)
+                if (chatViewModel.group.tabClosed){
+                    Button(
+                        onClick = { onNotifyUsers() },
+                        modifier = Modifier,
+                        shape = RoundedCornerShape(5.dp)
 
-                ) {
-                    Text("Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                    ) {
+                        Text("Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                    }
+                } else {
+                    Button(
+                        onClick = { addExpense(group) },
+                        modifier = Modifier,
+                        shape = RoundedCornerShape(5.dp)
+                    ) {
+                        Text("Add Expense", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                    }
                 }
+
+
             }
         }
     }
