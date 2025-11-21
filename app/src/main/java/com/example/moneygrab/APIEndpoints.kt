@@ -16,12 +16,20 @@ data class LoginRequest(
     val phone: String,
     val password: String
 )
+
+
 interface APIEndpoints {
-    @POST("user/{id}/group/{groupId}")
-    suspend fun payTransaction(
-        @Path("id") userId: String,
-        @Path("groupId") groupId: Int
-    ): Response<Int>
+    data class PayTransactionsRequest(
+        val groupId: Int,
+        val userId: Int
+    )
+
+    data class PayTransactionsResponse(
+        val updated: Int,
+        val message: String
+    )
+    @POST("payTransactions")
+    suspend fun payTransactions(@Body request: PayTransactionsRequest): Response<PayTransactionsResponse>
 
     @GET("users/search/{search}")
     suspend fun getSuggestedUsers(@Path("search") search: String): Response<List<User>>
@@ -43,7 +51,7 @@ interface APIEndpoints {
     @GET("groups/{id}")
     suspend fun getGroup(@Path("id") id: Int): Response<Group>
 
-    @POST("closeGroup")
+    @POST("/closeGroup")
     suspend fun closeTab(@Body body: CloseTab): Response<CloseTabResponse>
 
     @GET("/groups/{groupId}/{userId}/sum")
