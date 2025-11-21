@@ -34,6 +34,7 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.components.SlideToUnlock
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private fun getSum(currentUser: User?, group1: Group?): Double{
@@ -61,6 +62,7 @@ class ConfirmPaymentModelView() : ViewModel() {
     var user: User? = null
     var amountOwed = mutableFloatStateOf(0f)
     var errorHasOccurred = mutableStateOf(false)
+    var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
     var group: Group by mutableStateOf(Group(
         id = -1,
@@ -116,7 +118,9 @@ class ConfirmPaymentModelView() : ViewModel() {
         }
     }
     fun payTransaction(navigation: (Group) -> Unit, context: Context){
+        println("WHAT THE HELLY")
         viewModelScope.launch {
+            isLoading.value = true
             val response = try {
                 api.payTransactions(APIEndpoints.PayTransactionsRequest(
                     groupId = group.id,
@@ -128,12 +132,15 @@ class ConfirmPaymentModelView() : ViewModel() {
                 errorHasOccurred.value = true
                 null
             }
+            delay(3000)
 
             if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "Not enough funds"
                 errorHasOccurred.value = true
             } else {
+                isLoading.value = false
                 navigation(group)
+                println(group)
             }
         }
     }
@@ -144,7 +151,7 @@ class ConfirmPaymentModelView() : ViewModel() {
 fun ConfirmPaymentPage(
     modifier: Modifier = Modifier,
     groupId: Int,
-    navigation: () -> Unit
+    navigation: (Group) -> Unit
 ) {
 
     val context = LocalContext.current
@@ -159,7 +166,6 @@ fun ConfirmPaymentPage(
 
     val groupName = confirmPaymentModelView.group.name
     //State hoisting for the slider
-    var isLoading by remember { mutableStateOf(false) }
 
     val headlineColor = MaterialTheme.colorScheme.onSurface
     val accent = MaterialTheme.colorScheme.primary
@@ -185,7 +191,7 @@ fun ConfirmPaymentPage(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton(onClick = navigation) {
+                    IconButton(onClick = { navigation(confirmPaymentModelView.group) }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_arrow_back),
                             contentDescription = "Back"
@@ -236,13 +242,12 @@ fun ConfirmPaymentPage(
                         .padding(horizontal = 8.dp)
                 ) {
                     SlideToUnlock(
-                        isLoading = isLoading,
+                        isLoading = confirmPaymentModelView.isLoading.value,
                         onUnlockRequested = {
                             confirmPaymentModelView.payTransaction(
-                                navigation = { navigation },
                                 context = context,
+                                navigation = { paidGroup -> navigation(paidGroup) }
                             )
-                            isLoading = true
                         }
                     )
                 }

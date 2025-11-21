@@ -178,7 +178,7 @@ fun NavManager() {
                     val groupId = backStackEntry.arguments?.getInt("groupId") ?: 1
                     ConfirmPaymentPage(
                         groupId = groupId,
-                        navigation = { navController.navigate("groupChat/$groupId")}
+                        navigation = { group -> navController.navigate("groupChat/${group.id}")}
                     )
                 }
 
