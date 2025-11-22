@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showPaymentNotification() {
-        NotificationHelper.show(
+        NotificationHelper.sendNotification(
             this,
             "Time to pay!",
             "The tab has been closed in your group and requests everyone to pay their debts"
