@@ -201,9 +201,37 @@ app.get('/groups/:id', (req, res) => {
         });
 });
 
+// Update group
+app.put('/groups/:id', (req, res) => {
+    const { id } = req.params;
+    let { name, description, users } = req.body;
+
+    db.run('UPDATE groups SET name = ?, description = ? WHERE id = ?',
+        [name, description, id],
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            db.run('DELETE FROM usersInGroup WHERE "group" = ?',
+                [id],
+                function (err) {
+                    if (err) return res.status(500).json({ error: err.message });
+
+                    let sqlStmt = db.prepare('INSERT INTO usersInGroup (user, "group", timeStamp) VALUES (?, ?, CURRENT_TIMESTAMP)');
+                    users.forEach(user => sqlStmt.run(user.id, id));
+                    sqlStmt.finalize(finalerror => {
+                        if (finalerror) return res.status(500).json({ error: finalerror.message });
+                        return res.status(200).json({ group_id: id });
+                    });
+                }
+            )
+        }
+
+    )
+})
+
 //Create new group
 app.post('/groups', (req, res) => {
-    let { name, description, image, owner, users } = req.body;
+    let { name, description, image, users } = req.body;
 
     db.run('INSERT INTO groups (name, description, image) VALUES (?, ?, ?)',
         [name, description, image],
@@ -211,20 +239,12 @@ app.post('/groups', (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
             let group_id = this.lastID
 
-            db.run('INSERT INTO usersInGroup (user, "group", timeStamp) VALUES (?, ?, CURRENT_TIMESTAMP)',
-                [owner, group_id],
-                function(err) {
-                    if (err) return res.status(500).json({error: err.message});
-
-                    let sqlStmt = db.prepare('INSERT INTO usersInGroup (user, "group", timeStamp) VALUES (?, ?, CURRENT_TIMESTAMP)');
-                    users.forEach(user => sqlStmt.run(user.id, group_id));
-                    sqlStmt.finalize(finalerror => {
-                        if (finalerror) return res.status(500).json({error: finalerror.message});
-                        return res.status(200).json({group_id: group_id});
-                    });
-                    //return res.json({group_id: group_id})
-                }
-            );
+            let sqlStmt = db.prepare('INSERT INTO usersInGroup (user, "group", timeStamp) VALUES (?, ?, CURRENT_TIMESTAMP)');
+            users.forEach(user => sqlStmt.run(user.id, group_id));
+            sqlStmt.finalize(finalerror => {
+                if (finalerror) return res.status(500).json({error: finalerror.message});
+                return res.status(200).json({group_id: group_id});
+            });
         }
     );
 });

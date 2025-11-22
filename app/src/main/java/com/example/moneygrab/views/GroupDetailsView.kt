@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,9 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -45,29 +51,32 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
+import kotlin.math.exp
 
 class GroupDetailsViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var chosenUsers = mutableStateListOf<User>()
+    var initialUsers = mutableStateListOf<User>()
+    var initialDescription = ""
     var searchResult = mutableStateListOf<User>()
+    var description = mutableStateOf("")
 
     var user: User? = null
     var group: Group by mutableStateOf(
         Group(
             id = -1,
             name = "",
-            users = emptySet(),
+            users = mutableSetOf(),
             expenses = mutableListOf(),
             isClosed = false,
             messages = mutableListOf(),
             description = "",
-            tabClosed = false
         )
     )
 
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
-    var groupName = mutableStateOf("")
+    var changeMade = mutableStateOf(false)
 
     fun setUser(context: Context) {
         CurrentUser(context).getUser()?.let {
@@ -86,6 +95,7 @@ class GroupDetailsViewModel() : ViewModel() {
                 response.body()?.let {
                     searchResult.clear()
                     searchResult.addAll(it)
+                    searchResult.removeAll(chosenUsers)
                 }
             }
         }
@@ -93,7 +103,7 @@ class GroupDetailsViewModel() : ViewModel() {
 
     fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
-            val response = try {
+            val groupResponse = try {
                 api.getGroup(groupId)
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
@@ -101,17 +111,73 @@ class GroupDetailsViewModel() : ViewModel() {
                 null
             }
 
-            if (!(response?.isSuccessful ?: false)) {
+            if (!(groupResponse?.isSuccessful ?: false)) {
                 errorMessage.value = "The phone number or password is incorrect"
                 errorHappened.value = true
             } else {
-                response.body()?.let {
+                groupResponse.body()?.let {
                     println("Group: ${it}")
                     group = it
                 }
             }
 
+            val userResponse = try {
+                api.getUsersInGroup(groupId)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+
+            userResponse?.body()?.let {
+                group.users = it
+                chosenUsers.clear()
+                chosenUsers.addAll(it)
+                description.value = group.description
+
+                // Capture initial values
+                initialUsers.addAll(chosenUsers)
+                initialDescription = group.description
+            }
         }
+    }
+
+    fun saveGroup(navigation: () -> Unit) {
+        viewModelScope.launch {
+            group.description = description.value
+            group.users.addAll(chosenUsers)
+
+            var response = try {
+                api.updateGroup(group.id, APIEndpoints.GroupData(group.name, group.description, chosenUsers))
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+
+            response?.let {
+                if (it.isSuccessful) {
+                    navigation()
+                }
+            }
+        }
+    }
+
+    fun checkDataChanged() {
+        var usersChanged = checkUsersChanged()
+        var textChanged = (initialDescription != description.value)
+        if (usersChanged || textChanged) {
+            changeMade.value = true
+        } else {
+            changeMade.value = false
+        }
+    }
+
+    private fun checkUsersChanged(): Boolean {
+        var res = false
+
+        if (!initialUsers.containsAll(chosenUsers)) res = true
+        if (!chosenUsers.containsAll(initialUsers)) res = true
+
+        return res
     }
 }
 
@@ -122,7 +188,9 @@ fun GroupDetailsView(
     modifier: Modifier = Modifier
 ){
     val context = LocalContext.current
-    val groupDetailsViewModel: GroupDetailsViewModel = viewModel()
+    var groupDetailsViewModel: GroupDetailsViewModel = viewModel()
+    var changeMade = groupDetailsViewModel.changeMade
+    var description = groupDetailsViewModel.description
 
     LaunchedEffect(groupId) {
         groupDetailsViewModel.setUser(context)
@@ -136,10 +204,12 @@ fun GroupDetailsView(
             onBack = onBack
         )
         OutlinedTextField(
-            value = groupDetailsViewModel.group.description, // TODO change to actually fetch the description once backend has been set up
-            onValueChange = {},
+            value = description.value,
+            onValueChange = {
+                description.value = it
+                groupDetailsViewModel.checkDataChanged()
+                },
             label = { Text("Description") },
-            readOnly = true,
             modifier = Modifier.fillMaxWidth(0.85f),
         )
 
@@ -147,6 +217,18 @@ fun GroupDetailsView(
 
         ManageParticipantsBar(groupDetailsViewModel)
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button (
+            onClick = { groupDetailsViewModel.saveGroup(onBack) },
+            shape = MaterialTheme.shapes.small,
+            enabled = changeMade.value
+        ) {
+            Text(
+                text = "Save Group",
+                fontSize = 20.sp
+                )
+        }
     }
 }
 
@@ -174,7 +256,9 @@ fun TopDetailsBar(groupName: String, onBack: () -> Unit) {
             Text(
                 text = groupName,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center)
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                modifier = Modifier.align(Alignment.Center),
             )
         }
     }
@@ -202,6 +286,7 @@ fun ManageParticipantsBar(groupDetailsViewModel: GroupDetailsViewModel) {
                 onValueChange = {
                     searchString = it
                     groupDetailsViewModel.getSuggestedUsers(searchString)
+                    groupDetailsViewModel.checkDataChanged()
 
                     if (searchResult.isNotEmpty() && !expanded) {
                         expanded = true
@@ -234,6 +319,7 @@ fun ManageParticipantsBar(groupDetailsViewModel: GroupDetailsViewModel) {
                         onClick = {
                             chosenUsers.add(user)
                             searchResult.remove(user)
+                            groupDetailsViewModel.checkDataChanged()
                         }
                     )
                 }
@@ -242,7 +328,10 @@ fun ManageParticipantsBar(groupDetailsViewModel: GroupDetailsViewModel) {
 
         PeopleList (
             users = chosenUsers,
-            onClick = { user -> chosenUsers.remove(user) }
+            onClick = { user ->
+                chosenUsers.remove(user)
+                groupDetailsViewModel.checkDataChanged()
+            }
         )
     }
 }

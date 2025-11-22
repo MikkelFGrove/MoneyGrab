@@ -78,11 +78,18 @@ interface APIEndpoints {
     @GET("/groups/{groupId}/users")
     suspend fun getUsersInGroup(@Path("groupId") groupId: Int): Response<MutableSet<User>>
 
+    @PUT("/groups/{groupId}")
+    suspend fun updateGroup(@Path("groupId") groupId: Int, @Body body: GroupData): Response<UpdateGroupResponse>
 
     data class CloseTabResponse(
         val message: String,
         val transactions: List<Transaction>
     )
+
+    data class UpdateGroupResponse(
+        val group_Id: Int
+    )
+
     data class CloseTab(
         val groupId: Int
     )
@@ -95,8 +102,7 @@ interface APIEndpoints {
     data class GroupData(
         val name: String,
         val description: String,
-        val users: List<User>,
-        val owner: Int
+        val users: List<User>
     )
 
     data class SignupData(

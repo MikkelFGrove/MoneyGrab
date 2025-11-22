@@ -9,12 +9,11 @@ import java.lang.reflect.Type
 data class Group (
     var id: Int,
     var name: String,
-    var users: Set<User>,
+    var users: MutableSet<User>,
     var expenses: MutableList<Expense>,
-    val description: String,
+    var description: String,
     @JsonAdapter(IntToBooleanAdapter::class)
     var isClosed: Boolean,
-    val tabClosed: Boolean,
     var messages: List<Message>,
 )
 

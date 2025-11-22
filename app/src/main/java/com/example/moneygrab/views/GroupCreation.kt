@@ -107,13 +107,13 @@ class GroupViewModel() : ViewModel() {
 
     fun createGroup(navigation: () -> Unit, user: User) {
         viewModelScope.launch {
+            chosenUsers.add(user)
             var response = try {
                 api.createGroup(
                     APIEndpoints.GroupData(
                         groupName.value,
                         description.value,
-                        chosenUsers,
-                        user.id
+                        chosenUsers
                     )
                 )
             } catch (e: Exception) {

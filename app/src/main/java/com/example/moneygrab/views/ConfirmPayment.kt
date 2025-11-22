@@ -63,12 +63,11 @@ class ConfirmPaymentModelView() : ViewModel() {
     var group: Group by mutableStateOf(Group(
         id = -1,
         name = "",
-        users = emptySet(),
+        users = mutableSetOf(),
         expenses = mutableListOf(),
         isClosed = false,
         description = "",
         messages = mutableListOf(),
-        tabClosed = false
     ))
 
     fun setUser(context: Context) {

@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,12 +38,11 @@ class ChatViewModel() : ViewModel() {
     var group: Group by mutableStateOf(Group(
         id = -1,
         name = "",
-        users = emptySet(),
+        users = mutableSetOf(),
         expenses = mutableListOf(),
         isClosed = false,
         description = "",
         messages = mutableListOf(),
-        tabClosed = false
     ))
     var amountOwed = mutableFloatStateOf(0f)
     var messages = mutableStateListOf<Message>()
@@ -236,7 +236,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
             onPayDebt = {
                 if (!chatViewModel.group.isClosed){
                     showCloseDialog = true
-                } else  if(chatViewModel.amountOwed.value > 0) {
+                } else if (chatViewModel.amountOwed.value > 0) {
                     onConfirmation(chatViewModel.group)
                 }
 
@@ -317,7 +317,7 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
                         .defaultMinSize(minWidth = 3.dp, minHeight = 3.dp)
 
                 ) {
-                    Text("${chatViewModel.amountOwed.value} DKK", color = color)
+                    Text("${chatViewModel.amountOwed.floatValue} DKK", color = color)
                 }
             }
             TextButton(
@@ -398,7 +398,7 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewMod
                         shape = RoundedCornerShape(5.dp),
 
                     ) {
-                        Text("Group Close - Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                        Text("Group Closed - Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
                     }
                 } else {
                     Button(
