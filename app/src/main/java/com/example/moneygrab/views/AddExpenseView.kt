@@ -21,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -293,26 +292,6 @@ fun AddUsersToExpense(expenseCreationViewModel: ExpenseCreationViewModel, curren
         }
 
         Spacer(modifier = Modifier.height(128.dp))
-
-        /*Button(
-            onClick = {
-                currentUser?.let {
-                    addUsersToExpenseViewModel.updateExpense()
-                    group?.let {
-                        onAddExpense(it)
-                    }
-                }
-            },
-            modifier = Modifier.padding(horizontal = 14.dp).height(64.dp),
-            shape = RoundedCornerShape(12.dp),
-            enabled = selectedUsers.isNotEmpty()
-        )
-        {
-            Text(
-                text = "Add Expense with ${selectedUsers.size} payer${if (selectedUsers.size != 1) "s" else ""}"
-            )
-        }*/
-
     }
 }
 

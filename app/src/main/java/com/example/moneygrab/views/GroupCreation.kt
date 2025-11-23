@@ -1,7 +1,5 @@
 package com.example.moneygrab.views
 
-
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -69,7 +67,6 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
-import retrofit2.Response
 
 class GroupViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -400,7 +397,7 @@ fun AccountSearchBar(groupViewModel: GroupViewModel) {
                                 )
                                 Text (
                                     color = Color.Gray,
-                                    text = user.phoneNumber.toString()
+                                    text = user.phoneNumber
                                 )
                             }
                         },

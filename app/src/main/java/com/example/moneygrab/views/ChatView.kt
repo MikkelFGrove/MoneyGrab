@@ -1,4 +1,3 @@
-// ChatScreen.kt
 package com.example.moneygrab.views
 
 import android.content.Context
@@ -16,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -161,8 +159,7 @@ class ChatViewModel() : ViewModel() {
 @Composable
 fun DialogCloseTheTab(
     onDismissRequest: () -> Unit,
-    onConfirmation: () -> Unit,
-    chatViewModel: ChatViewModel
+    onConfirmation: () -> Unit
 ) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
@@ -215,7 +212,6 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
                onName: (Group) -> Unit, onNotifyUsers: () -> Unit) {
     val chatViewModel: ChatViewModel = viewModel()
     var showCloseDialog by chatViewModel.showCloseDialog
-    var amountOwed by chatViewModel.amountOwed
     var groupName = chatViewModel.group.name
     var expenses = chatViewModel.group.expenses
     var context = LocalContext.current
@@ -261,9 +257,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
                     chatViewModel.closeTab { closedGroup ->
                         onConfirmation(closedGroup)
                     }
-                },
-                chatViewModel = chatViewModel
-
+                }
             )
         }
     }
@@ -415,8 +409,6 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewMod
         }
     }
 }
-
-
 
 /*
 @Preview(showBackground = true)

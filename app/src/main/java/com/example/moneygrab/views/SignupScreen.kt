@@ -31,8 +31,6 @@ import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
-import com.example.debtcalculator.data.User
-import com.example.moneygrab.LoginRequest
 import com.example.moneygrab.R
 
 class SignupViewModel() : ViewModel() {

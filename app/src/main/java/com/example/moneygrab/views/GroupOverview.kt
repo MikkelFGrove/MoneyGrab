@@ -25,7 +25,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,9 +50,6 @@ import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
-
-@Immutable
-data class FrontendGroup(val id: Int, val name: String)
 
 class GroupPageViewModel() : ViewModel(){
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -181,7 +177,7 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
             shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp) // matches your previous spacing
+                .padding(bottom = 10.dp)
         ) {
             Text(
                 text = "+",

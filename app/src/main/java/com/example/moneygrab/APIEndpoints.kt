@@ -2,7 +2,6 @@ package com.example.moneygrab
 
 import com.example.debtcalculator.data.Expense
 import com.example.debtcalculator.data.Group
-import com.example.debtcalculator.data.Message
 import com.example.debtcalculator.data.Transaction
 import com.example.debtcalculator.data.User
 import retrofit2.Response
@@ -12,22 +11,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 
-data class LoginRequest(
-    val phone: String,
-    val password: String
-)
-
-
 interface APIEndpoints {
-    data class PayTransactionsRequest(
-        val groupId: Int,
-        val userId: Int
-    )
-
-    data class PayTransactionsResponse(
-        val updated: Int,
-        val message: String
-    )
     @POST("payTransactions")
     suspend fun payTransactions(@Body request: PayTransactionsRequest): Response<PayTransactionsResponse>
 
@@ -46,8 +30,6 @@ interface APIEndpoints {
     @POST("users")
     suspend fun signup(@Body body: SignupData): Response<com.example.debtcalculator.data.User>
 
-    //TODO - This should either return a group with all expenses and their owners and payer or a separate endpoint should be made
-    // Currently, the chatview crashes as it tries to create bubbles for null expenses
     @GET("groups/{id}")
     suspend fun getGroup(@Path("id") id: Int): Response<Group>
 
@@ -80,6 +62,16 @@ interface APIEndpoints {
 
     @PUT("/groups/{groupId}")
     suspend fun updateGroup(@Path("groupId") groupId: Int, @Body body: GroupData): Response<UpdateGroupResponse>
+
+    data class PayTransactionsRequest(
+        val groupId: Int,
+        val userId: Int
+    )
+
+    data class PayTransactionsResponse(
+        val updated: Int,
+        val message: String
+    )
 
     data class CloseTabResponse(
         val message: String,

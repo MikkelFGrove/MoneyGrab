@@ -33,26 +33,6 @@ import com.example.moneygrab.components.SlideToUnlock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private fun getSum(currentUser: User?, group1: Group?): Double{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    return 0.0
-}
-
-private fun fetchGroup(id: Int): Group?{
-    /*val api = RetrofitClient().api
-    return try {
-        api.fetchGroups(user)
-    } catch (e: Exception){
-        emptyList()
-    }*/
-    return null
-}
-
 class ConfirmPaymentModelView() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var user: User? = null

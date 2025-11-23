@@ -1,7 +1,6 @@
 package com.example.moneygrab
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -32,7 +31,6 @@ import com.example.moneygrab.views.AddExpenseView
 import com.example.moneygrab.views.ConfirmPaymentPage
 import com.example.moneygrab.views.GroupCreationView
 import com.example.moneygrab.views.GroupDetailsView
-import com.example.moneygrab.views.GroupDetailsViewModel
 import com.example.moneygrab.views.GroupPage
 import com.example.moneygrab.views.ProfilePage
 
