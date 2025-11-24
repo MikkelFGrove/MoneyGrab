@@ -123,10 +123,12 @@ db.serialize(() => {
         (1, 1, datetime('now')),
         (2, 1, datetime('now')),
         (3, 1, datetime('now')),
-        (4, 2, datetime('now')),
-        (1, 2, datetime('now')),
         (5, 1, datetime('now')),
+
+        (1, 2, datetime('now')),
+        (4, 2, datetime('now')),
         (5, 2, datetime('now')),
+
         (5, 3, datetime('now'))
     `);
 
@@ -138,38 +140,38 @@ db.serialize(() => {
         (1, 2, 'Hej Jonas!', datetime('now'))
     `);
 
-    db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp) VALUES
+   db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp) VALUES
         (1, 1, 'Leje af sommerhus', 2000.00, datetime('now')),
         (2, 1, 'Mad og drikke', 600.00, datetime('now')),
+        (5, 1, 'Mad og drikke', 600.00, datetime('now')),
+
         (4, 2, 'Netflix abonnement', 120.00, datetime('now')),
-        (5, 1, 'Mad og drikke', 600.00, datetime('now'))
-        `);
+        (4, 2, 'Lidt blandet slik', 150.00, datetime('now'))
+    `)
 
     db.run(`INSERT INTO payersInExpense (user, expense) VALUES
-        (1, 1),
-        (2, 1),
-        (3, 1),
-        (2, 2),
-        (3, 2),
-        (1, 3),
-        (4, 3),
-        (1, 4),
-        (1, 2),
-        (4, 4)
+    (1, 1), (2, 1), (3, 1), (5, 1),
+    (1, 2), (2, 2), (3, 2), (5, 2),
+    (1, 3), (2, 3), (3, 3), (5, 3),
+    (1, 4), (4, 4), (5,5), (1, 5)
     `);
 
     db.run(`INSERT INTO transactions (sender, receiver, amount, creationTime, paymentTime, paid) VALUES
-        (2, 1, 666.67, datetime('now'), NULL, 0),
-        (3, 1, 666.67, datetime('now'), NULL, 0),
-        (3, 2, 200.00, datetime('now'), datetime('now'), 1),
-        (1, 4, 60.00, datetime('now'), NULL, 0)
+    (2, 1, 200.00, datetime('now'), NULL, 0),
+    (3, 1, 800.00, datetime('now'), NULL, 0),
+    (5, 1, 200.00, datetime('now'), NULL, 0),
+    (1, 4, 60.00, datetime('now'), NULL, 0),
+    (5,4, 75.00, datetime('now'), NULL, 0),
+    (1,4, 75.00, datetime('now'), NULL, 0)
     `);
 
     db.run(`INSERT INTO transactionsInExpense (expense, "transaction") VALUES
-        (1, 1),
-        (1, 2),
-        (2, 3),
-        (3, 4)
+    (1, 1),  -- Mikkel → Anna
+    (1, 2),  -- Sara → Anna
+    (1, 3),  -- John → Anna
+    (4, 4),   -- Anna → Jonas (Netflix)
+    (5, 5),
+    (5, 6)
     `);
 });
 // get group messages
@@ -196,7 +198,7 @@ app.get('/groups/:id', (req, res) => {
         (err, row) => {
             if(err) return res.status(500).json({error: err.message});
             if(!row) return res.status(404).json({error: 'group not found'});
-            row.tabClosed = row.tabClose == 1;
+            row.tabClosed = row.isClosed == 1;
             res.json(row);
         });
 });
@@ -495,76 +497,101 @@ app.get('/groups/:id/:user/sum', (req, res) => {
     const groupId = req.params.id;
     const userId = req.params.user;
 
-    // Get all users in the group
-    db.all(
-        'SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+    let isGroupClosed;
+    db.get(
+        'SELECT * FROM groups WHERE id = ?',
         [groupId],
-        (err, userRows) => {
-            if (err) return res.status(500).json({ error: err.message });
+        (err, row) => {
+            if(err) return res.status(500).json({error: err.message});
+            if(!row) return res.status(404).json({error: 'group not found'});
+            isGroupClosed =  row.isClosed;
 
-            const users = userRows.map(u => new User(u.id, u.phoneNumber, u.name, u.image));
+            if(isGroupClosed === 1) {
+                db.all(`SELECT sender, receiver, amount FROM transactions WHERE paid = 0
+                    AND id IN (SELECT "transaction" FROM transactionsInExpense tIE JOIN expenses expense ON expense.id = tIE.expense WHERE expense."group" = ?)`,
+                [groupId],
+            (err, rows) => {
+                if(err) return res.status(500).json({ error: err.message});
 
-            // Get all expenses in the group
-            db.all('SELECT * FROM expenses WHERE "group" = ?', [groupId], (err2, expenseRows) => {
-                if (err2) return res.status(500).json({ error: err2.message });
-
-                // Case: no expenses
-                if (expenseRows.length === 0) {
-                    const group = new Group("temp", users, [], [], groupId);
-                    const balances = debtService.calculateBalances(group);
-                    const userBalance = balances.find(b => b.user.id == userId);
-                    return res.json(userBalance || { error: "User balance not found" });
-                }
-
-                // Build Expense objects with payers
-                let expenses = [];
-                let processed = 0;
-
-                expenseRows.forEach(expense => {
-                    db.all(
-                        'SELECT user FROM payersInExpense WHERE expense = ?',
-                        [expense.id],
-                        (err3, payerRows) => {
-                            if (err3) return res.status(500).json({ error: err3.message });
-
-                            const payerUsers = payerRows.map(p => {
-                                const found = userRows.find(u => u.id === p.user);
-                                return found ? new User(found.id, found.phoneNumber, found.name, found.image) : null;
-                            }).filter(Boolean);
-
-                            const ownerRow = userRows.find(u => u.id === expense.owner);
-                            const lender = ownerRow ? new User(ownerRow.id, ownerRow.phoneNumber, ownerRow.name, ownerRow.image) : null;
-
-                            expenses.push(new Expense(
-                                expense.amount,
-                                expense.description,
-                                lender,
-                                payerUsers
-                            ));
-
-                            processed++;
-
-                            // Once all expenses are processed
-                            if (processed === expenseRows.length) {
-                                const group = new Group("temp", users, expenses, [], groupId);
-                                const balances = debtService.calculateBalances(group);
-                                const userBalance = balances.find(b => b.user.id == userId);
-
-                                if (!userBalance) {
-                                    return res.status(404).json({ error: "Giraffe balance not found" });
-                                }
-
-                                return res.json({"amount": userBalance.balance});
-                            }
-                        }
-                    );
+                let balance = 0;
+                rows.forEach(transaction => {
+                    if( transaction.sender == userId) balance -= transaction.amount;
+                    if( transaction.receiver == userId) balance += transaction.amount;
                 });
+                return res.json({amount: balance});
             });
+                
+            } else {
+                // Get all users in the group
+                db.all(
+                'SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+                [groupId],
+                (err, userRows) => {
+                    if (err) return res.status(500).json({ error: err.message });
+
+                    const users = userRows.map(u => new User(u.id, u.phoneNumber, u.name, u.image));
+
+                    // Get all expenses in the group
+                    db.all('SELECT * FROM expenses WHERE "group" = ?', [groupId], (err2, expenseRows) => {
+                        if (err2) return res.status(500).json({ error: err2.message });
+
+                        // Case: no expenses
+                        if (expenseRows.length === 0) {
+                            const group = new Group("temp", users, [], [], groupId);
+                            const balances = debtService.calculateBalances(group);
+                            const userBalance = balances.find(b => b.user.id == userId);
+                            return res.json(userBalance || { error: "User balance not found" });
+                        }
+
+                        // Build Expense objects with payers
+                        let expenses = [];
+                        let processed = 0;
+
+                        expenseRows.forEach(expense => {
+                            db.all(
+                                'SELECT user FROM payersInExpense WHERE expense = ?',
+                                [expense.id],
+                                (err3, payerRows) => {
+                                    if (err3) return res.status(500).json({ error: err3.message });
+
+                                    const payerUsers = payerRows.map(p => {
+                                        const found = userRows.find(u => u.id === p.user);
+                                        return found ? new User(found.id, found.phoneNumber, found.name, found.image) : null;
+                                    }).filter(Boolean);
+
+                                    const ownerRow = userRows.find(u => u.id === expense.owner);
+                                    const lender = ownerRow ? new User(ownerRow.id, ownerRow.phoneNumber, ownerRow.name, ownerRow.image) : null;
+
+                                    expenses.push(new Expense(
+                                        expense.amount,
+                                        expense.description,
+                                        lender,
+                                        payerUsers
+                                    ));
+
+                                    processed++;
+
+                                    // Once all expenses are processed
+                                    if (processed === expenseRows.length) {
+                                        const group = new Group("temp", users, expenses, [], groupId);
+                                        const balances = debtService.calculateBalances(group);
+                                        const userBalance = balances.find(b => b.user.id == userId);
+
+                                        if (!userBalance) {
+                                            return res.status(404).json({ error: "Giraffe balance not found" });
+                                        }
+
+                                        return res.json({amount: userBalance.balance});
+                                    }
+                                }
+                            );
+                        });
+                    });
+                }
+            );
         }
-    );
+    });
 });
-
-
 
 
 //Pay transactions
