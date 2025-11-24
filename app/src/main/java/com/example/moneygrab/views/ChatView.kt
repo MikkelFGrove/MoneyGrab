@@ -143,7 +143,7 @@ class ChatViewModel() : ViewModel() {
             if (response?.isSuccessful?: false) {
                 println(response)
                 println("SIGMA")
-                if (amountOwed.value > 0) {
+                if (amountOwed.value < 0) {
                     fetchGroupData(groupId = group.id)
                     onConfirmation(group)
                 } else {
@@ -232,7 +232,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
             onPayDebt = {
                 if (!chatViewModel.group.isClosed){
                     showCloseDialog = true
-                } else if (chatViewModel.amountOwed.value > 0) {
+                } else if (chatViewModel.amountOwed.value < 0) {
                     onConfirmation(chatViewModel.group)
                 }
 
@@ -267,9 +267,9 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
 fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack: () -> Unit, onPayDebt: () -> Unit, onName: (Group) -> Unit) {
     var color: Color
     val group = group
-    if (chatViewModel.amountOwed.value > 0){
+    if (chatViewModel.amountOwed.value < 0){
         color = Color(235, 54, 54)
-    } else if(chatViewModel.amountOwed.value < 0) {
+    } else if(chatViewModel.amountOwed.value > 0) {
         color = Color(187, 227, 93)
     } else {
         color = Color.White
