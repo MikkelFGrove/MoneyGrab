@@ -105,7 +105,7 @@ class ConfirmPaymentModelView() : ViewModel() {
                 errorHasOccurred.value = true
                 null
             }
-            delay(3000)
+            delay(1000)
 
             if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "Not enough funds"
