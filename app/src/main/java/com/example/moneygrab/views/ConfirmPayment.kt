@@ -32,6 +32,7 @@ import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.components.SlideToUnlock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class ConfirmPaymentModelView() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -200,7 +201,7 @@ fun ConfirmPaymentPage(
                     )
                 }
                 Text(
-                    text = "${confirmPaymentModelView.amountOwed.floatValue} kr",
+                    text = "${abs(confirmPaymentModelView.amountOwed.floatValue)} kr",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = accent,
