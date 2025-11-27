@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -44,17 +45,26 @@ class LoginViewModel() : ViewModel() {
     var wrongCredentials = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
 
+    var isLoading = mutableStateOf(false)
+
     fun login(navigation: () -> Unit, context: Context) {
         viewModelScope.launch {
+            isLoading.value = true
             val response = try {
                 api.login(APIEndpoints.LoginData(phone.value, password.value))
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 wrongCredentials.value = true
+                isLoading.value = false
                 null
             }
 
-            if (response?.code() != 200) {
+            isLoading.value = false
+
+            if (response?.code() == 523) {
+                errorMessage.value = "Network connection could not be established"
+                wrongCredentials.value = true
+            } else if (response?.code() != 200){
                 errorMessage.value = "The phone number or password is incorrect"
                 wrongCredentials.value = true
             } else {
@@ -75,7 +85,9 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
     var password by loginViewModel.password
     var wrongCredentials by loginViewModel.wrongCredentials
     var errorMessage by loginViewModel.errorMessage
+    var isLoading by loginViewModel.isLoading
     val context = LocalContext.current
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -83,6 +95,13 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if (isLoading) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(12.dp))
+            Text("Logging in")
+
+        }
+        Spacer(Modifier.height(12.dp))
         Text("Login",
             fontSize = 26.sp,
             modifier = Modifier
@@ -144,6 +163,8 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
                     .clickable { onSignupClicked() }
             )
         }
+
+
     }
 }
 

@@ -22,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,25 +57,33 @@ class GroupPageViewModel() : ViewModel(){
     var groups = mutableStateListOf<Group>()
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
+    var isLoading = mutableStateOf(false)
+
 
     fun fetchGroups(userId: Int) {
         println("outer1")
         viewModelScope.launch {
+            isLoading.value = true
             println("outer2")
             val response = try {
                 api.getGroups(userId)
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 println(e.message)
+                isLoading.value = false
                 null
             }
             println(response?.body())
+            isLoading.value = false
 
-            if (!(response?.isSuccessful ?: false)){
-                errorMessage.value = "An error has occurred"
+            if (response?.code() == 523){
+                errorMessage.value = "Could not fetch groups due to network error"
+                errorHappened.value = true
+            } else if (!(response?.isSuccessful ?: false)){
+                errorMessage.value = "Internal server error"
                 errorHappened.value = true
                 println(errorMessage)
-            } else {
+            }else {
                 response.body()?.let { list ->
                     groups.clear()
                     groups.addAll(list)
@@ -104,7 +113,6 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
     val groups: List<Group> = groupPageViewModel.groups
 
     Box(modifier = modifier.fillMaxSize()) {
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -116,7 +124,9 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+
             stickyHeader {
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -124,6 +134,7 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -156,6 +167,16 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                         }
                         Spacer(modifier= Modifier.size(10.dp))
                     }
+                }
+                if (groupPageViewModel.isLoading.value) {
+                    Spacer(Modifier.height(32.dp))
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(12.dp))
+                    Text("Fetching Groups")
+                }
+                if (groupPageViewModel.errorHappened.value) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(groupPageViewModel.errorMessage.value, color = Color.Red)
                 }
             }
 
