@@ -198,7 +198,9 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
             shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp)
+                .padding(bottom = 10.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+
         ) {
             Text(
                 text = "+",

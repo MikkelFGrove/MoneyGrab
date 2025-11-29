@@ -316,6 +316,8 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
             }
             TextButton(
                 modifier = Modifier.align(Alignment.Center),
+
+
                 onClick = { onName(group) }){
                 Text(
                 text = groupName,
@@ -350,12 +352,13 @@ fun Bubbles(moneyRequest: Expense) {
         Surface(
             color = bubbleColor,
             shape = RoundedCornerShape(16.dp),
-            tonalElevation = 2.dp
+            tonalElevation = 2.dp,
         ) {
             Text(
                 text = "${moneyRequest.description} ${ "%.2f".format(moneyRequest.amount) }",
                 color = textColor,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+
             )
         }
     }
@@ -390,7 +393,7 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewMod
                         onClick = { onNotifyUsers() },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(5.dp),
-
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                     ) {
                         Text("Group Closed - Notify users", fontSize = MaterialTheme.typography.titleLarge.fontSize)
                     }
@@ -398,7 +401,9 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewMod
                     Button(
                         onClick = { addExpense(chatViewModel.group) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(5.dp)
+                        shape = RoundedCornerShape(5.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+
                     ) {
                         Text("Add Expense", fontSize = MaterialTheme.typography.titleLarge.fontSize)
                     }

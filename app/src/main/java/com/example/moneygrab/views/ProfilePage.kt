@@ -123,7 +123,9 @@ fun ProfilePage(
                 .size(200.dp)
                 .clip(CircleShape)
                 .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
+
+            contentAlignment = Alignment.Center,
+
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_profile_placeholder),
@@ -200,7 +202,8 @@ fun ProfilePage(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                        colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
                 )
@@ -223,7 +226,9 @@ fun ProfilePage(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+
+                    colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFE53935),
                 contentColor = Color.White
             )

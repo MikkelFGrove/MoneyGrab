@@ -27,7 +27,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
@@ -36,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -176,7 +179,7 @@ fun GroupCreationView(
             label = { Text("Name") },
             onValueChange = { groupName = it },
             modifier = Modifier
-                .fillMaxWidth(0.85f)
+                .fillMaxWidth(0.85f),
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -215,6 +218,8 @@ fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit, user: User
         modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
             .background(Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+
     ) {
         Button (
             onClick = {
@@ -262,7 +267,10 @@ fun ImageButton(groupViewModel: GroupViewModel) {
         contentPadding = PaddingValues(0.dp, 0.dp),
         colors = ButtonColors(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, Color.Transparent, Color.Transparent),
         shape = MaterialTheme.shapes.large,
-        onClick = { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+        onClick = { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly), )
+        }
+
     ) {
         if (imageUri != null) {
             val painter = rememberAsyncImagePainter(
@@ -311,7 +319,6 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
         modifier = Modifier
             .fillMaxWidth(0.85f),
         shape = MaterialTheme.shapes.small,
-
         ) {
         Row (
             modifier = Modifier.fillMaxSize(),

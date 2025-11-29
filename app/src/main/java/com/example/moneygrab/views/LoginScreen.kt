@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -137,6 +139,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
             Text("Login")
         }

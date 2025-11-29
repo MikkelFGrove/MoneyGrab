@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -141,7 +143,9 @@ fun SignUpScreen(
             onClick = { signupViewModel.signup(onSignUpClicked, context) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(48.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+
         ) {
             Text("Create account", fontSize = 18.sp)
         }
