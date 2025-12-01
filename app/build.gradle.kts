@@ -63,7 +63,8 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.3.0")
     implementation ("androidx.wear.compose:compose-foundation:1.3.0")
     implementation ("androidx.wear.compose:compose-navigation:1.3.0")
-
+    //MotionToast
+    implementation("com.github.Spikeysanju:MotionToast:1.4")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

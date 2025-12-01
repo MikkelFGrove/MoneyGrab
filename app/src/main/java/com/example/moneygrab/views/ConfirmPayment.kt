@@ -33,6 +33,11 @@ import com.example.moneygrab.components.SlideToUnlock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import android.app.Activity
+import androidx.core.content.res.ResourcesCompat
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
+
 
 class ConfirmPaymentModelView() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -105,14 +110,50 @@ class ConfirmPaymentModelView() : ViewModel() {
                 errorMessage.value = "An error has occurred"
                 errorHasOccurred.value = true
                 null
+
+                // MotionToast RED error
+                MotionToast.createColorToast(
+                    context as Activity,
+                    "Error",
+                    errorMessage.value,
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                )
+                isLoading.value = false
+                return@launch
             }
             delay(1000)
 
             if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "Not enough funds"
                 errorHasOccurred.value = true
+
+                MotionToast.createColorToast(
+                    context as Activity,
+                    "Error",
+                    errorMessage.value,
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                )
+                isLoading.value = false
             } else {
                 isLoading.value = false
+
+                // MotionToast GREEN success
+                MotionToast.createColorToast(
+                    context as Activity,
+                    "Success",
+                    "Payment completed!",
+                    MotionToastStyle.SUCCESS,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                )
+
                 navigation(group)
                 print(response.body())
                 println(group)

@@ -81,9 +81,7 @@ fun SlideToUnlock(
         }
     )
 
-    val swipeFraction by remember {
-        derivedStateOf { calculateSwipeFraction(swipeState.progress) }
-    }
+    var swipeFraction by remember { mutableStateOf(0f) }
 
     LaunchedEffect(isLoading) {
         swipeState.animateTo(if (isLoading) Anchor.End else Anchor.Start)
@@ -91,9 +89,9 @@ fun SlideToUnlock(
 
     Track(
         swipeState = swipeState,
-        swipeFraction = swipeFraction,
         enabled = !isLoading,
         modifier = modifier,
+        onSwipeFractionChanged = { fraction -> swipeFraction = fraction },
     ) {
         Hint(
             text = "Pay now",
@@ -112,16 +110,6 @@ fun SlideToUnlock(
     }
 }
 
-@OptIn(ExperimentalWearMaterialApi::class)
-fun calculateSwipeFraction(progress: SwipeProgress<Anchor>): Float {
-    val atAnchor = progress.from == progress.to
-    val fromStart = progress.from == Anchor.Start
-    return if (atAnchor) {
-        if (fromStart) 0f else 1f
-    } else {
-        if (fromStart) progress.fraction else 1f - progress.fraction
-    }
-}
 
 enum class Anchor { Start, End }
 
@@ -129,9 +117,9 @@ enum class Anchor { Start, End }
 @Composable
 fun Track(
     swipeState: SwipeableState<Anchor>,
-    swipeFraction: Float,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    onSwipeFractionChanged: (Float) -> Unit,
     content: @Composable (BoxScope.() -> Unit),
 ) {
     val density = LocalDensity.current
@@ -153,8 +141,19 @@ fun Track(
         }
     }
 
-    val backgroundColor by remember(swipeFraction) {
-        derivedStateOf { calculateTrackColor(swipeFraction) }
+    // compute fraction from offset
+    val localSwipeFraction = remember(swipeState.offset.value, endOfTrackPx) {
+        if (endOfTrackPx <= 0f) 0f
+        else (swipeState.offset.value / endOfTrackPx).coerceIn(0f, 1f)
+    }
+
+    // send fraction back up to SlideToUnlock
+    LaunchedEffect(localSwipeFraction) {
+        onSwipeFractionChanged(localSwipeFraction)
+    }
+
+    val backgroundColor by remember(localSwipeFraction) {
+        derivedStateOf { calculateTrackColor(localSwipeFraction) }
     }
 
     Box(
@@ -261,77 +260,82 @@ private object Track {
 private fun Preview() {
     val previewBackgroundColor = Color(0xFFEDEDED)
     var isLoading by remember { mutableStateOf(false) }
-        val spacing = 88.dp
-        Column(
-            verticalArrangement = spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(previewBackgroundColor)
-                .padding(horizontal = 24.dp),
-        ) {
-            Spacer(modifier = Modifier.height(spacing))
+    val spacing = 88.dp
+    Column(
+        verticalArrangement = spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(previewBackgroundColor)
+            .padding(horizontal = 24.dp),
+    ) {
+        Spacer(modifier = Modifier.height(spacing))
 
-            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = "Normal")
-                    Spacer(modifier = Modifier.weight(1f))
-                    Thumb(isLoading = false)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(text = "Loading")
-                    Spacer(modifier = Modifier.widthIn(min = 16.dp))
-                    Thumb(isLoading = true)
-                }
-
-
+        Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = "Normal")
+                Spacer(modifier = Modifier.weight(1f))
+                Thumb(isLoading = false)
             }
 
-            Spacer(modifier = Modifier.height(spacing))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Text(text = "Inactive")
-            Track(
-                swipeState = SwipeableState(Anchor.Start),
-                swipeFraction = 0f,
-                enabled = true,
-                modifier = Modifier.fillMaxWidth(),
-                content = {},
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Active")
-            Track(
-                swipeState = SwipeableState(Anchor.Start),
-                swipeFraction = 1f,
-                enabled = true,
-                modifier = Modifier.fillMaxWidth(),
-                content = {},
-            )
-
-
-            Spacer(modifier = Modifier.height(spacing))
-
-
-            SlideToUnlock(
-                isLoading = isLoading,
-                onUnlockRequested = { isLoading = true },
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            OutlinedButton(
-                colors = ButtonDefaults.outlinedButtonColors(),
-                shape = RoundedCornerShape(percent = 50),
-                onClick = { isLoading = false }) {
-                Text(text = "Cancel loading", style = MaterialTheme.typography.labelMedium)
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(text = "Loading")
+                Spacer(modifier = Modifier.widthIn(min = 16.dp))
+                Thumb(isLoading = true)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        Spacer(modifier = Modifier.height(spacing))
+
+        val inactiveState = rememberSwipeableState(Anchor.Start)
+        val activeState = rememberSwipeableState(Anchor.End)
+
+        Text(text = "Inactive")
+        Track(
+            swipeState = inactiveState,
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            onSwipeFractionChanged = {},
+            content = {},
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(text = "Active")
+        Track(
+            swipeState = activeState,
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+            onSwipeFractionChanged = {},
+            content = {},
+        )
+
+        Spacer(modifier = Modifier.height(spacing))
+
+        SlideToUnlock(
+            isLoading = isLoading,
+            onUnlockRequested = { isLoading = true },
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        OutlinedButton(
+            colors = ButtonDefaults.outlinedButtonColors(),
+            shape = RoundedCornerShape(percent = 50),
+            onClick = { isLoading = false }
+        ) {
+            Text(text = "Cancel loading", style = MaterialTheme.typography.labelMedium)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
     }
+}
