@@ -84,6 +84,8 @@ class GroupViewModel() : ViewModel() {
     var errorMessage = mutableStateOf("")
     var user: User? = null
 
+    var wrongInputs = mutableStateOf(false)
+
     fun storeImage(img: Bitmap?) {
         image.value = img
     }
@@ -110,27 +112,39 @@ class GroupViewModel() : ViewModel() {
 
     fun createGroup(navigation: () -> Unit, user: User) {
         viewModelScope.launch {
-            chosenUsers.add(user)
-            var response = try {
-                api.createGroup(
-                    APIEndpoints.GroupData(
-                        groupName.value,
-                        description.value,
-                        chosenUsers
+            println(groupName.value)
+            if (groupName.value == ""){
+                errorMessage.value = "Name cannot be empty"
+                errorCreatingGroup.value = true
+            } else{
+                println(user.name)
+                wrongInputs.value = false
+                var users = mutableListOf<User>()
+                users.addAll(chosenUsers)
+                users.add(user)
+                var response = try {
+                    api.createGroup(
+                        APIEndpoints.GroupData(
+                            groupName.value,
+                            description.value,
+                            users
+                        )
                     )
-                )
-            } catch (e: Exception) {
-                println(e.message)
-                errorMessage.value = "A network error has occurred"
-                errorCreatingGroup.value = true
-                null
-            }
 
-            if (!(response?.isSuccessful ?: false)) {
-                errorMessage.value = "An error has occurred on the server"
-                errorCreatingGroup.value = true
-            } else {
-                navigation()
+                } catch (e: Exception) {
+                    println(e.message)
+                    errorMessage.value = "A network error has occurred"
+                    errorCreatingGroup.value = true
+
+                    null
+                }
+
+                if (!(response?.isSuccessful ?: false)) {
+                    errorMessage.value = "An error has occurred on the server"
+                    errorCreatingGroup.value = true
+                } else {
+                    navigation()
+                }
             }
         }
     }
@@ -206,7 +220,6 @@ fun GroupCreationView(
 
         if (errorCreatingGroup) {
             ErrorCard(errorMessage)
-
             Spacer(modifier = Modifier.height(6.dp))
         }
 
@@ -221,7 +234,7 @@ fun CreateButton(groupViewModel: GroupViewModel, onClick: () -> Unit, user: User
     Card(
         modifier = Modifier
             .padding(0.dp, 0.dp, 0.dp, 20.dp)
-            .background(Color.Transparent),
+            .background(Color.Transparent).height(45.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
 
     ) {
@@ -365,7 +378,7 @@ fun PeopleCard(user: User, onClick: (User) -> Unit) {
 @Composable
 fun AccountSearchBar(groupViewModel: GroupViewModel) {
     Column (
-        modifier = Modifier.fillMaxHeight(0.75f),
+        modifier = Modifier.fillMaxHeight(0.7f),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         var searchString by remember { mutableStateOf("") }

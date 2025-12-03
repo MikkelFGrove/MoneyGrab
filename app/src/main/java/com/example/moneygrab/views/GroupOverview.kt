@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -94,6 +96,47 @@ class GroupPageViewModel() : ViewModel(){
     }
 }
 
+
+@Composable
+fun Top(onProfilePressed: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+
+            Text(
+                text = "Groups",
+                fontSize = 45.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .align(Alignment.CenterEnd)
+                    .clip(CircleShape)
+                    .clickable(onClick = onProfilePressed)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_profile_placeholder),
+                    contentDescription = "Profile Picture",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                )
+            }
+        }
+    }
+}
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
@@ -113,83 +156,47 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
     val groups: List<Group> = groupPageViewModel.groups
 
     Box(modifier = modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 8.dp,
-                bottom = 96.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Top(onProfilePressed = onProfileClicked)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 8.dp,
+                    bottom = 96.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
 
-            stickyHeader {
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(topStart= 12.dp, topEnd= 12.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                    ) {
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "Groups",
-                            fontSize = 45.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(CircleShape)
-                                .clickable(onClick = onProfileClicked)
-                                .background(color = MaterialTheme.colorScheme.background)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_profile_placeholder),
-                                contentDescription = "Profile Picture",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape)
-                            )
-                        }
-                        Spacer(modifier= Modifier.size(10.dp))
+                stickyHeader {
+                    if (groupPageViewModel.isLoading.value) {
+                        Spacer(Modifier.height(32.dp))
+                        CircularProgressIndicator()
+                        Spacer(Modifier.height(12.dp))
+                        Text("Fetching Groups")
+                    }
+                    if (groupPageViewModel.errorHappened.value) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(groupPageViewModel.errorMessage.value, color = Color.Red)
                     }
                 }
-                if (groupPageViewModel.isLoading.value) {
-                    Spacer(Modifier.height(32.dp))
-                    CircularProgressIndicator()
-                    Spacer(Modifier.height(12.dp))
-                    Text("Fetching Groups")
-                }
-                if (groupPageViewModel.errorHappened.value) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(groupPageViewModel.errorMessage.value, color = Color.Red)
+
+                items(groups, key = { it.id }) { group ->
+                    GroupCard(
+                        name = group.name,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        onClick = { onGroupClicked(group)
+                            println(group.toString())}
+                    )
                 }
             }
 
-            items(groups, key = { it.id }) { group ->
-                GroupCard(
-                    name = group.name,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = { onGroupClicked(group)
-                    println(group.toString())}
-                )
-            }
         }
+
+
 
         // Sticky "+" button
         Button(
