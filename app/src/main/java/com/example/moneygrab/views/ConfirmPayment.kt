@@ -242,7 +242,7 @@ fun ConfirmPaymentPage(
                     )
                 }
                 Text(
-                    text = "${abs(confirmPaymentModelView.amountOwed.floatValue)} kr",
+                    text = "${"%.2f".format(abs(confirmPaymentModelView.amountOwed.floatValue))} kr",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = accent,

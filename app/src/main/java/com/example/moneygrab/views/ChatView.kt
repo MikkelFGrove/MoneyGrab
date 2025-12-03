@@ -140,11 +140,8 @@ class ChatViewModel() : ViewModel() {
             } catch (e: Exception) {
                 null
             }
-            println("HOLY MOLY" + response)
 
             if (response?.isSuccessful?: false) {
-                println(response)
-                println("SIGMA")
                 if (amountOwed.value < 0) {
                     fetchGroupData(groupId = group.id)
                     onConfirmation(group)
@@ -337,7 +334,7 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
 
                     ) {
                         Text(
-                            "${chatViewModel.amountOwed.floatValue}kr",
+                            "${"%.2f".format(chatViewModel.amountOwed.floatValue)}kr",
                             fontSize = MaterialTheme.typography.titleLarge.fontSize
                         )
                     }
