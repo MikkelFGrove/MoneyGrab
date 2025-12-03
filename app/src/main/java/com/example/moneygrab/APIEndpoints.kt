@@ -96,7 +96,7 @@ interface APIEndpoints {
         val description: String,
         val users: List<User>,
     )
-    
+
     data class GroupData(
         val name: String,
         val description: String,

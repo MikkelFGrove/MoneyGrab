@@ -1,5 +1,6 @@
 package com.example.moneygrab.views
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -59,6 +60,7 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.painter.Painter
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -71,6 +73,17 @@ class GroupPageViewModel : ViewModel() {
     var isLoading = mutableStateOf(false)
 
     var amountsOwed = mutableStateMapOf<Int, Float>()
+    var profilePicture = mutableStateOf<ImageBitmap?>(null)
+
+    @OptIn(ExperimentalEncodingApi::class)
+    fun loadImage(img: String) {
+        val decodedString: ByteArray = Base64.decode(img)
+        if (decodedString.isNotEmpty()) {
+            profilePicture.value =
+                BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                    .asImageBitmap()
+        }
+    }
 
     fun fetchGroups(userId: Int) {
         println("outer1")
@@ -128,7 +141,7 @@ class GroupPageViewModel : ViewModel() {
 
 
 @Composable
-fun Top(onProfilePressed: () -> Unit) {
+fun Top(onProfilePressed: () -> Unit, groupPageViewModel: GroupPageViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.primary
@@ -155,10 +168,18 @@ fun Top(onProfilePressed: () -> Unit) {
                     .clickable(onClick = onProfilePressed)
                     .background(MaterialTheme.colorScheme.background)
             ) {
+                var painter: Painter? = null
+
+                groupPageViewModel.profilePicture.value?.let {
+                    painter = BitmapPainter(it)
+                }
+
+                if (painter == null) painter = painterResource(id = R.drawable.ic_profile_placeholder)
+
                 Image(
-                    painter = painterResource(id = R.drawable.ic_profile_placeholder),
+                    painter = painter,
                     contentDescription = "Profile Picture",
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape)
@@ -167,7 +188,7 @@ fun Top(onProfilePressed: () -> Unit) {
         }
     }
 }
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalEncodingApi::class)
 @Composable
 fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, groupPageViewModel: GroupPageViewModel = viewModel(), modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -180,12 +201,15 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
         user?.let {
             println("User ID: ${it.id}")
             groupPageViewModel.fetchGroups(it.id)
+            it.image?.let { img ->
+                groupPageViewModel.loadImage(img)
+            }
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Top(onProfilePressed = onProfileClicked)
+            Top(onProfilePressed = onProfileClicked, groupPageViewModel)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
