@@ -1,6 +1,7 @@
 package com.example.moneygrab.views
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +39,8 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
 import com.example.moneygrab.components.openNotificationSettings
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class ProfilePageViewModel() : ViewModel() {
     var editMode = mutableStateOf(false)
@@ -43,12 +51,23 @@ class ProfilePageViewModel() : ViewModel() {
     var errorMessage = mutableStateOf("")
     private val api: APIEndpoints = RetrofitClient.getAPI()
     private var userId = mutableStateOf(-1)
+    var profilePicture = mutableStateOf<ImageBitmap?>(null)
 
     fun getUser(context: Context) {
         currentUser.value = CurrentUser(context).getUser()
         name.value = currentUser.value?.name.toString()
         phoneNumber.value = currentUser.value?.phoneNumber.toString()
         userId.value = currentUser.value?.id?: -1
+        currentUser.value?.image?.let {
+            loadImage(it)
+        }
+    }
+    @OptIn(ExperimentalEncodingApi::class)
+    fun loadImage(img: String) {
+        val decodedString: ByteArray = Base64.decode(img)
+        if (decodedString.isNotEmpty()) {
+            profilePicture.value = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
+        }
     }
 
     fun saveUser(context: Context) {
@@ -64,7 +83,6 @@ class ProfilePageViewModel() : ViewModel() {
                 errorMessage.value = "The phone number or password is incorrect"
             } else {
                 response.body()?.let {
-                    println("SIGMASABALLS")
                     CurrentUser(context).saveUser(it)
                     editMode.value = false
                 }
@@ -75,6 +93,7 @@ class ProfilePageViewModel() : ViewModel() {
 
 }
 
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
 fun ProfilePage(
     onBackClick: () -> Unit = {},
@@ -127,8 +146,17 @@ fun ProfilePage(
             contentAlignment = Alignment.Center,
 
         ) {
+            var painter: Painter? = null
+
+            profilePageViewModel.profilePicture.value?.let {
+                painter = BitmapPainter(it)
+            }
+
+            if (painter == null) painter = painterResource(id = R.drawable.ic_profile_placeholder)
+
             Image(
-                painter = painterResource(id = R.drawable.ic_profile_placeholder),
+                painter = painter,
+                contentScale = ContentScale.Crop,
                 contentDescription = "Profile Picture",
                 modifier = Modifier
                     .size(200.dp)

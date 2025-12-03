@@ -38,7 +38,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -70,7 +69,9 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
-import kotlin.collections.remove
+import java.io.ByteArrayOutputStream
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class GroupViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -78,7 +79,7 @@ class GroupViewModel() : ViewModel() {
     var chosenUsers = mutableStateListOf<User>()
     var searchResult = mutableStateListOf<User>()
     var groupName = mutableStateOf("")
-    var image = mutableStateOf<Bitmap?>(null)
+    var image = ""
     var description = mutableStateOf("")
     var errorCreatingGroup = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
@@ -86,8 +87,16 @@ class GroupViewModel() : ViewModel() {
 
     var wrongInputs = mutableStateOf(false)
 
+    @OptIn(ExperimentalEncodingApi::class)
     fun storeImage(img: Bitmap?) {
-        image.value = img
+        img?.let {
+            val os = ByteArrayOutputStream()
+            img.compress(Bitmap.CompressFormat.PNG, 100, os)
+            val byteArray: ByteArray = os.toByteArray()
+            val encoded = Base64.encode(byteArray);
+            image = encoded
+            println(image)
+        }
     }
 
     fun getSuggestedUsers(searchString: String) {
@@ -127,7 +136,8 @@ class GroupViewModel() : ViewModel() {
                         APIEndpoints.GroupData(
                             groupName.value,
                             description.value,
-                            users
+                            users,
+                            image
                         )
                     )
 
@@ -285,7 +295,7 @@ fun ImageButton(groupViewModel: GroupViewModel) {
         colors = ButtonColors(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary, Color.Transparent, Color.Transparent),
         shape = MaterialTheme.shapes.large,
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
-        onClick = { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly), )
+        onClick = { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
     ) {

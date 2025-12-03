@@ -67,6 +67,7 @@ class GroupDetailsViewModel() : ViewModel() {
             isClosed = false,
             messages = mutableListOf(),
             description = "",
+            image = ""
         )
     )
 
@@ -143,7 +144,7 @@ class GroupDetailsViewModel() : ViewModel() {
             group.users.addAll(chosenUsers)
 
             var response = try {
-                api.updateGroup(group.id, APIEndpoints.GroupData(group.name, group.description, chosenUsers))
+                api.updateGroup(group.id, APIEndpoints.UpdateGroupData(group.name, group.description, chosenUsers))
             } catch (e: Exception) {
                 println(e.message)
                 null

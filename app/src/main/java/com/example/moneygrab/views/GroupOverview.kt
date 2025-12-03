@@ -1,5 +1,7 @@
 package com.example.moneygrab.views
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,26 +37,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.debtcalculator.data.Group
 import com.example.authentication.CurrentUser
+import com.example.debtcalculator.data.Group
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
+import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.painter.Painter
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 
 class GroupPageViewModel : ViewModel() {
@@ -65,6 +73,17 @@ class GroupPageViewModel : ViewModel() {
     var isLoading = mutableStateOf(false)
 
     var amountsOwed = mutableStateMapOf<Int, Float>()
+    var profilePicture = mutableStateOf<ImageBitmap?>(null)
+
+    @OptIn(ExperimentalEncodingApi::class)
+    fun loadImage(img: String) {
+        val decodedString: ByteArray = Base64.decode(img)
+        if (decodedString.isNotEmpty()) {
+            profilePicture.value =
+                BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                    .asImageBitmap()
+        }
+    }
 
     fun fetchGroups(userId: Int) {
         println("outer1")
@@ -122,7 +141,7 @@ class GroupPageViewModel : ViewModel() {
 
 
 @Composable
-fun Top(onProfilePressed: () -> Unit) {
+fun Top(onProfilePressed: () -> Unit, groupPageViewModel: GroupPageViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.primary
@@ -149,10 +168,18 @@ fun Top(onProfilePressed: () -> Unit) {
                     .clickable(onClick = onProfilePressed)
                     .background(MaterialTheme.colorScheme.background)
             ) {
+                var painter: Painter? = null
+
+                groupPageViewModel.profilePicture.value?.let {
+                    painter = BitmapPainter(it)
+                }
+
+                if (painter == null) painter = painterResource(id = R.drawable.ic_profile_placeholder)
+
                 Image(
-                    painter = painterResource(id = R.drawable.ic_profile_placeholder),
+                    painter = painter,
                     contentDescription = "Profile Picture",
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape)
@@ -161,7 +188,7 @@ fun Top(onProfilePressed: () -> Unit) {
         }
     }
 }
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalEncodingApi::class)
 @Composable
 fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, groupPageViewModel: GroupPageViewModel = viewModel(), modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -174,12 +201,15 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
         user?.let {
             println("User ID: ${it.id}")
             groupPageViewModel.fetchGroups(it.id)
+            it.image?.let { img ->
+                groupPageViewModel.loadImage(img)
+            }
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Top(onProfilePressed = onProfileClicked)
+            Top(onProfilePressed = onProfileClicked, groupPageViewModel)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -205,27 +235,23 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                     }
                 }
 
-            items(groups, key = { it.id }) { group ->
-
-                val amountOwedForGroup = amountsOwed[group.id] ?: 0f
-
-                GroupCard(
-                    name = group.name,
-                    amountOwed = amountOwedForGroup,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        onGroupClicked(group)
-                        println(group.toString())
-                    }
-                )
+                items(groups, key = { it.id }) { group ->
+                    val amountOwedForGroup = amountsOwed[group.id] ?: 0f
+                    GroupCard(
+                        name = group.name,
+                        amountOwed = amountOwedForGroup,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        onClick = {
+                            onGroupClicked(group)
+                            println(group.toString())
+                        },
+                        image = group.image
+                    )
+                }
             }
         }
-
-        }
-
-
-
+        
         // Sticky "+" button
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -248,12 +274,14 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
 }
 
 
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
 fun GroupCard(
     name: String,
     amountOwed: Float,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    image: String?
 ) {
     val amountColor = when {
         amountOwed < 0 -> Color(235, 54, 54)
@@ -266,20 +294,31 @@ fun GroupCard(
     Card(
         modifier = modifier
             .fillMaxWidth(0.9f)
-            .height(100.dp)
+            .height(140.dp)
             .padding(vertical = 8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-
-        Box(modifier = Modifier.fillMaxSize()) {
-
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ){
+            image?.let {
+                val decodedString: ByteArray = Base64.decode(image)
+                val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "Image of the group",
+                    contentScale = ContentScale.Crop
+                )
+            }
             Text(
                 text = name,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp)

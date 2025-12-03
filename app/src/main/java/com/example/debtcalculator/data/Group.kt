@@ -15,6 +15,7 @@ data class Group (
     @JsonAdapter(IntToBooleanAdapter::class)
     var isClosed: Boolean,
     var messages: List<Message>,
+    var image: String?
 )
 
 class IntToBooleanAdapter : JsonDeserializer<Boolean> {

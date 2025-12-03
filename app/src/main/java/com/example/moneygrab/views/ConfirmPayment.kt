@@ -54,6 +54,7 @@ class ConfirmPaymentModelView() : ViewModel() {
         isClosed = false,
         description = "",
         messages = mutableListOf(),
+        image = ""
     ))
 
     fun setUser(context: Context) {

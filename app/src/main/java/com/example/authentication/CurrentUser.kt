@@ -13,6 +13,7 @@ class CurrentUser(context: Context) {
             putInt("id", user.id)
             putString("phone", user.phoneNumber)
             putString("username", user.name)
+            putString("image", user.image)
             apply()
         }
     }
@@ -21,7 +22,8 @@ class CurrentUser(context: Context) {
         val id = prefs.getInt("id", -1)
         val phone = prefs.getString("phone", null) ?: return null
         val name = prefs.getString("username", null) ?: return null
-        return User(id, phone, name, null)
+        val image = prefs.getString("image", null) ?: return null
+        return User(id, phone, name, image)
     }
     fun clear() {
         prefs.edit().clear().apply()
