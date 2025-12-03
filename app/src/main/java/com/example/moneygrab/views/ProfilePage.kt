@@ -142,7 +142,7 @@ fun ProfilePage(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Phone number") },
+                label = { Text("Name") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()

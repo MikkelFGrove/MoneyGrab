@@ -166,8 +166,6 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
                     .clickable { onSignupClicked() }
             )
         }
-
-
     }
 }
 
