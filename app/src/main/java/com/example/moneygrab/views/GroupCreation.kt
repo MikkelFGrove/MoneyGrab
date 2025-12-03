@@ -70,6 +70,7 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
+import kotlin.collections.remove
 
 class GroupViewModel() : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -81,6 +82,7 @@ class GroupViewModel() : ViewModel() {
     var description = mutableStateOf("")
     var errorCreatingGroup = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
+    var user: User? = null
 
     fun storeImage(img: Bitmap?) {
         image.value = img
@@ -100,6 +102,7 @@ class GroupViewModel() : ViewModel() {
                     searchResult.clear()
                     searchResult.addAll(it)
                     searchResult.removeAll(chosenUsers)
+                    searchResult.remove(user)
                 }
             }
         }
@@ -143,8 +146,9 @@ fun GroupCreationView(
     var errorCreatingGroup by groupViewModel.errorCreatingGroup
     var groupName by groupViewModel.groupName
     var errorMessage by groupViewModel.errorMessage
-    var context = LocalContext.current
-    var user = CurrentUser(context).getUser()
+    val context = LocalContext.current
+    val user = CurrentUser(context).getUser()
+    groupViewModel.user = user
 
     Column(
         modifier = modifier
