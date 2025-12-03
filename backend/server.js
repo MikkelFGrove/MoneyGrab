@@ -462,9 +462,10 @@ app.get('/users/:id/groups', (req, res) => {
 //Get expenses on a group
 app.get('/groups/:id/expenses', (req, res) => {
   const { id } = req.params;
-  db.all(`SELECT id, owner, "group", description, amount, timeStamp
-          FROM expenses expense
-          WHERE expense."group" = ?`,
+  db.all(`SELECT expenses.id, owner, name, "group", description, amount, timeStamp
+          FROM expenses
+          INNER JOIN users u on expenses.owner = u.id
+          WHERE "group" = ?`,
     [id],
     (err, rows) => {
       if (err) return res.status(500).json({ err: err.message });

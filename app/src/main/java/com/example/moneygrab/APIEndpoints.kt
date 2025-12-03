@@ -117,6 +117,7 @@ interface APIEndpoints {
         var description: String,
         var group: Int,
         var owner: Int,
+        var name: String
     )
 
     data class OwedAmount(

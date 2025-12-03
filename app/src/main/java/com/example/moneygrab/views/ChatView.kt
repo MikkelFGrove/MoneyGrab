@@ -13,8 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -99,7 +101,7 @@ class ChatViewModel() : ViewModel() {
                             User(
                                 expense.owner,
                                 "",
-                                "",
+                                expense.name,
                                 ""
                             ),
                             mutableListOf()))
@@ -349,18 +351,48 @@ fun Bubbles(moneyRequest: Expense) {
             .padding(vertical = 6.dp, horizontal = 10.dp),
         horizontalArrangement = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) Arrangement.End else Arrangement.Start
     ) {
-        Surface(
-            color = bubbleColor,
-            shape = RoundedCornerShape(16.dp),
-            tonalElevation = 2.dp,
+        Column (
+            horizontalAlignment = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) Alignment.End else Alignment.Start
         ) {
-            Text(
-                text = "${moneyRequest.description} ${ "%.2f".format(moneyRequest.amount) }",
-                color = textColor,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            val senderName = if (moneyRequest.owner.id != CurrentUser(LocalContext.current).getUser()?.id) moneyRequest.owner.name else "You"
 
+            Text (
+                text = senderName,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.secondary,
+                textAlign = TextAlign.Center,
+                softWrap = true,
+                modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp),
             )
+
+            Surface(
+                color = bubbleColor,
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 2.dp,
+                modifier = Modifier.width(160.dp)
+            ) {
+                Column (
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text (
+                        text = "${"%.2f".format(moneyRequest.amount)} kr.",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                        modifier = Modifier.padding(12.dp, 12.dp, 12.dp, 2.dp),
+                    )
+                    Text (
+                        text = moneyRequest.description,
+                        fontSize = 14.sp,
+                        color = textColor,
+                        textAlign = TextAlign.Center,
+                        softWrap = true,
+                        modifier = Modifier.padding(12.dp, 2.dp, 12.dp, 4.dp),
+                    )
+                }
+            }
         }
+
     }
 }
 @Composable
