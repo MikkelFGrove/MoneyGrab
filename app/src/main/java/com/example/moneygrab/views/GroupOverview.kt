@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -32,7 +33,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
@@ -53,14 +53,18 @@ import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.Alignment
 
-class GroupPageViewModel() : ViewModel(){
+
+class GroupPageViewModel : ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
     var groups = mutableStateListOf<Group>()
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
     var isLoading = mutableStateOf(false)
 
+    var amountsOwed = mutableStateMapOf<Int, Float>()
 
     fun fetchGroups(userId: Int) {
         println("outer1")
@@ -78,23 +82,43 @@ class GroupPageViewModel() : ViewModel(){
             println(response?.body())
             isLoading.value = false
 
-            if (response?.code() == 523){
+            if (response?.code() == 523) {
                 errorMessage.value = "Could not fetch groups due to network error"
                 errorHappened.value = true
-            } else if (!(response?.isSuccessful ?: false)){
+            } else if (!(response?.isSuccessful ?: false)) {
                 errorMessage.value = "Internal server error"
                 errorHappened.value = true
                 println(errorMessage)
-            }else {
+            } else {
                 response.body()?.let { list ->
                     groups.clear()
                     groups.addAll(list)
                     println(groups)
+                    amountsOwed.clear()
+                    list.forEach { group ->
+                        fetchAmountsOwedForGroup(group.id, userId)
+                    }
                 }
             }
         }
     }
+
+    private fun fetchAmountsOwedForGroup(groupId: Int, userId: Int) {
+        viewModelScope.launch {
+            val response = try {
+                api.getAmountOwed(groupId, userId)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+
+            response?.body()?.let {
+                amountsOwed[groupId] = it.amount
+            }
+        }
+    }
 }
+
 
 
 @Composable
@@ -139,13 +163,12 @@ fun Top(onProfilePressed: () -> Unit) {
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onCreateGroupClicked: () -> Unit, groupPageViewModel: GroupPageViewModel = viewModel(), modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val currentUser = remember { CurrentUser(context) }
     var user = currentUser.getUser()
-
-    val groupPageViewModel: GroupPageViewModel = viewModel()
-
+    val amountsOwed = groupPageViewModel.amountsOwed
+    val groups: List<Group> = groupPageViewModel.groups
 
     LaunchedEffect(user){
         user?.let {
@@ -153,7 +176,6 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
             groupPageViewModel.fetchGroups(it.id)
         }
     }
-    val groups: List<Group> = groupPageViewModel.groups
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -183,16 +205,22 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                     }
                 }
 
-                items(groups, key = { it.id }) { group ->
-                    GroupCard(
-                        name = group.name,
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        onClick = { onGroupClicked(group)
-                            println(group.toString())}
-                    )
-                }
+            items(groups, key = { it.id }) { group ->
+
+                val amountOwedForGroup = amountsOwed[group.id] ?: 0f
+
+                GroupCard(
+                    name = group.name,
+                    amountOwed = amountOwedForGroup,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = {
+                        onGroupClicked(group)
+                        println(group.toString())
+                    }
+                )
             }
+        }
 
         }
 
@@ -221,30 +249,62 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
 
 
 @Composable
-fun GroupCard(name: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}){
+fun GroupCard(
+    name: String,
+    amountOwed: Float,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
+    val amountColor = when {
+        amountOwed < 0 -> Color(235, 54, 54)
+        amountOwed > 0 -> Color(187, 227, 93)
+        else -> Color.Black
+    }
+
+    val backgroundColor = MaterialTheme.colorScheme.secondaryContainer
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth(fraction = 0.9f)
+        modifier = modifier
+            .fillMaxWidth(0.9f)
             .height(100.dp)
             .padding(vertical = 8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-
     ) {
-        Box(modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center){
-        Text(
-            text = name,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            Text(
+                text = name,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .align(Alignment.BottomCenter),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${amountOwed} DKK",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = amountColor
+                )
+            }
         }
     }
 }
+
+
+
 
 @Preview(showBackground = true)
 @Composable
@@ -253,7 +313,7 @@ fun GroupPreview() {
         GroupPage(
             onProfileClicked = {},
             onCreateGroupClicked = {},
-            onGroupClicked = {}
+            onGroupClicked = {},
         )
     }
 }
