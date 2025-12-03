@@ -43,6 +43,7 @@ class ChatViewModel() : ViewModel() {
         isClosed = false,
         description = "",
         messages = mutableListOf(),
+        image = ""
     ))
     var amountOwed = mutableFloatStateOf(0f)
     var messages = mutableStateListOf<Message>()

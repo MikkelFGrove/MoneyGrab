@@ -1,5 +1,6 @@
 package com.example.moneygrab.views
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,26 +36,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.debtcalculator.data.Group
 import com.example.authentication.CurrentUser
+import com.example.debtcalculator.data.Group
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
+import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 
 class GroupPageViewModel : ViewModel() {
@@ -205,27 +211,23 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                     }
                 }
 
-            items(groups, key = { it.id }) { group ->
-
-                val amountOwedForGroup = amountsOwed[group.id] ?: 0f
-
-                GroupCard(
-                    name = group.name,
-                    amountOwed = amountOwedForGroup,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        onGroupClicked(group)
-                        println(group.toString())
-                    }
-                )
+                items(groups, key = { it.id }) { group ->
+                    val amountOwedForGroup = amountsOwed[group.id] ?: 0f
+                    GroupCard(
+                        name = group.name,
+                        amountOwed = amountOwedForGroup,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        onClick = {
+                            onGroupClicked(group)
+                            println(group.toString())
+                        },
+                        image = group.image
+                    )
+                }
             }
         }
-
-        }
-
-
-
+        
         // Sticky "+" button
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -248,12 +250,14 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
 }
 
 
+@OptIn(ExperimentalEncodingApi::class)
 @Composable
 fun GroupCard(
     name: String,
     amountOwed: Float,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    image: String?
 ) {
     val amountColor = when {
         amountOwed < 0 -> Color(235, 54, 54)
@@ -266,20 +270,31 @@ fun GroupCard(
     Card(
         modifier = modifier
             .fillMaxWidth(0.9f)
-            .height(100.dp)
+            .height(140.dp)
             .padding(vertical = 8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-
-        Box(modifier = Modifier.fillMaxSize()) {
-
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ){
+            image?.let {
+                val decodedString: ByteArray = Base64.decode(image)
+                val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "Image of the group",
+                    contentScale = ContentScale.Crop
+                )
+            }
             Text(
                 text = name,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 16.dp)
