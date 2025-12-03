@@ -253,7 +253,7 @@ fun TopDetailsBar(groupName: String, onBack: () -> Unit) {
                 text = groupName,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.primary,
-                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                fontSize = 30.sp,
                 modifier = Modifier.align(Alignment.Center),
             )
         }

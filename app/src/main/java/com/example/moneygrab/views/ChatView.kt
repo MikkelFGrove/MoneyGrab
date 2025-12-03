@@ -267,69 +267,86 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
 
 @Composable
 fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack: () -> Unit, onPayDebt: () -> Unit, onName: (Group) -> Unit) {
-    var color: Color
     val group = group
-    if (chatViewModel.amountOwed.value < 0){
-        color = Color(235, 54, 54)
-    } else if(chatViewModel.amountOwed.value > 0) {
-        color = Color(187, 227, 93)
-    } else {
-        color = Color.White
+    val color: Color = when {
+        chatViewModel.amountOwed.floatValue < 0 ->
+            MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+
+        chatViewModel.amountOwed.floatValue > 0 ->
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+        else -> Color.Gray.copy(alpha = 0.7f)
     }
-    Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+            Column(modifier = Modifier) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 0.dp),
+
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_arrow_back),
-                        contentDescription = "Back"
-                    )
-                }
-                Button(
-                    onClick = onPayDebt,
-                    contentPadding = PaddingValues(
-                        start = 4.dp,
-                        top = 1.dp,
-                        end = 4.dp,
-                        bottom = 1.dp,
-                    ),
-                    shape = RoundedCornerShape(5.dp),
-                    colors = ButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                        contentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                        disabledContentColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                    ),
-                    modifier = Modifier
-                        .defaultMinSize(minWidth = 3.dp, minHeight = 3.dp)
-
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("${chatViewModel.amountOwed.floatValue} DKK", color = color)
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_arrow_back),
+                            contentDescription = "Back"
+                        )
+                    }
+
+                    Text(
+                        text = groupName,
+                        fontSize = 30.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
+
+                    IconButton(onClick = { onName(group) }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_edit),
+                            contentDescription = "Settings"
+                        )
+                    }
                 }
-            }
-            TextButton(
-                modifier = Modifier.align(Alignment.Center),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Button(
+                        onClick = onPayDebt,
+                        contentPadding = PaddingValues(
+                            start = 4.dp,
+                            top = 1.dp,
+                            end = 4.dp,
+                            bottom = 1.dp,
+                        ),
+                        shape = RoundedCornerShape(5.dp),
+                        colors = ButtonColors(
+                            containerColor = color,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Gray,
+                            disabledContentColor = Color.Gray,
+                        ),
+                        modifier = Modifier
+                            .defaultMinSize(minWidth = 5.dp, minHeight = 5.dp)
 
-
-                onClick = { onName(group) }){
-                Text(
-                text = groupName,
-                fontSize = MaterialTheme.typography.titleLarge.fontSize,
-                textAlign = TextAlign.Center,
-                )
+                    ) {
+                        Text(
+                            "${chatViewModel.amountOwed.floatValue}kr",
+                            fontSize = MaterialTheme.typography.titleLarge.fontSize
+                        )
+                    }
+                }
             }
         }
     }
 }
+
 @Composable
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
