@@ -378,18 +378,20 @@ fun Bubbles(moneyRequest: Expense) {
         horizontalArrangement = if (moneyRequest.owner?.id == CurrentUser(LocalContext.current).getUser()?.id) Arrangement.End else Arrangement.Start
     ) {
         Column (
-            horizontalAlignment = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) Alignment.End else Alignment.Start
+            horizontalAlignment = if (moneyRequest.owner?.id == CurrentUser(LocalContext.current).getUser()?.id) Alignment.End else Alignment.Start
         ) {
-            val senderName = if (moneyRequest.owner.id != CurrentUser(LocalContext.current).getUser()?.id) moneyRequest.owner.name else "You"
+            val senderName = if (moneyRequest.owner?.id != CurrentUser(LocalContext.current).getUser()?.id) moneyRequest.owner?.name else "You"
 
-            Text (
-                text = senderName,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.secondary,
-                textAlign = TextAlign.Center,
-                softWrap = true,
-                modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp),
-            )
+            senderName?.let {
+                Text (
+                    text = it,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.secondary,
+                    textAlign = TextAlign.Center,
+                    softWrap = true,
+                    modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp),
+                )
+            }
 
             Surface(
                 color = bubbleColor,
