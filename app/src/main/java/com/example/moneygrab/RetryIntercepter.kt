@@ -16,6 +16,7 @@ class RetryInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         var attempt = 0
         var delay = initialDelay
+        Thread.sleep(100)
 
         while (true) {
             try {
