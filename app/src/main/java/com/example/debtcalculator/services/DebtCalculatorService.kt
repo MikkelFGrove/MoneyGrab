@@ -10,7 +10,7 @@ class DebtCalculatorService {
     fun calculateBalances(group: Group): ArrayList<Balance> {
         val map = HashMap<User, Float>()
         for (expense in group.expenses) {
-            val lender = expense.owner
+            val lender: User = expense.owner!!
             val pricePerUser = expense.amount / expense.payers.size
 
             // Update lender's balance
