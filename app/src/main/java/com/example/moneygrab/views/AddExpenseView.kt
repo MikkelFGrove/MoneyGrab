@@ -63,6 +63,7 @@ class ExpenseCreationViewModel(): ViewModel() {
     var group by mutableStateOf<Group?>(null)
     var stringAmount = mutableStateOf("")
     var description = mutableStateOf("")
+    var selectedLender = mutableStateOf<User?>(null);
     var selectedUsers = mutableStateListOf<User>()
     var expense: Expense? = null
 
@@ -157,6 +158,7 @@ fun AddExpenseView(groupId: Int, onCreateExpense: (Group?) -> Unit, back: () -> 
 
     LaunchedEffect(groupId) {
         expenseCreationViewModel.fetchGroup(groupId)
+        expenseCreationViewModel.selectedLender.value = currentUser
     }
 
     Column(
@@ -180,7 +182,9 @@ fun AddExpenseView(groupId: Int, onCreateExpense: (Group?) -> Unit, back: () -> 
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(64.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(64.dp),
         verticalArrangement = Arrangement.spacedBy(space = 32.dp,
             alignment = Alignment.CenterVertically
         ),
@@ -194,7 +198,8 @@ fun AddExpenseView(groupId: Int, onCreateExpense: (Group?) -> Unit, back: () -> 
             TextField(
                 value = stringAmount.value,
                 onValueChange = { stringAmount.value = it },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
                     .padding(end = 10.dp),
                 placeholder = { Text("Amount") },
                 suffix = { Text("DKK", style = MaterialTheme.typography.bodyLarge)},
@@ -207,6 +212,9 @@ fun AddExpenseView(groupId: Int, onCreateExpense: (Group?) -> Unit, back: () -> 
             onValueChange = { description.value = it },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Add Text") })
+
+
+        AddLenderToExpense(expenseCreationViewModel, currentUser);
 
         AddUsersToExpense(expenseCreationViewModel, currentUser)
 
@@ -226,6 +234,88 @@ fun AddExpenseView(groupId: Int, onCreateExpense: (Group?) -> Unit, back: () -> 
     }
 }
 
+
+@Composable
+fun AddLenderToExpense(expenseCreationViewModel: ExpenseCreationViewModel, currentUser: User?) {
+    val isDropDownExpanded = remember { mutableStateOf(false) }
+    var group = expenseCreationViewModel.group
+    var selectedUser = expenseCreationViewModel.selectedLender.value
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text (
+            text = "Paid by",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            ),
+            modifier = Modifier.padding(bottom = 12.dp),
+            textAlign = TextAlign.Center
+        )
+        Box(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clickable { isDropDownExpanded.value = true }
+                .padding(horizontal = 16.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Select user",
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Dropdown icon"
+                )
+            }
+
+            DropdownMenu(
+                expanded = isDropDownExpanded.value,
+                onDismissRequest = { isDropDownExpanded.value = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            ) {
+                group?.users?.forEach { user ->
+                    val isSelected = (selectedUser?.id == user.id)
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = user.name)
+                                if(isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        },
+                        onClick = {
+                            expenseCreationViewModel.selectedLender.value = user
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
 @Composable
 fun AddUsersToExpense(expenseCreationViewModel: ExpenseCreationViewModel, currentUser: User?) {
     var group = expenseCreationViewModel.group

@@ -307,12 +307,16 @@ fun GroupCard(
         ){
             image?.let {
                 val decodedString: ByteArray = Base64.decode(image)
-                val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size).asImageBitmap()
-                Image(
-                    bitmap = bitmap,
-                    contentDescription = "Image of the group",
-                    contentScale = ContentScale.Crop
-                )
+                if (decodedString.isNotEmpty()) {
+                    val bitmap =
+                        BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                            .asImageBitmap()
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = "Image of the group",
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
             Text(
                 text = name,

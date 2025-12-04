@@ -91,7 +91,7 @@ class GroupViewModel() : ViewModel() {
     fun storeImage(img: Bitmap?) {
         img?.let {
             val os = ByteArrayOutputStream()
-            img.compress(Bitmap.CompressFormat.PNG, 100, os)
+            img.compress(Bitmap.CompressFormat.PNG, 20, os)
             val byteArray: ByteArray = os.toByteArray()
             val encoded = Base64.encode(byteArray);
             image = encoded

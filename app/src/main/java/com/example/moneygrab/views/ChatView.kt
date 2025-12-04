@@ -360,13 +360,13 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
     //This needs to be implemented again when login authcontext is up and running
-    val bubbleColor = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) {
+     val bubbleColor = if (moneyRequest.owner?.id == CurrentUser(LocalContext.current).getUser()?.id) {
         colors.primary
     } else {
         colors.primary.copy(alpha = 0.2f)
     }
 
-    val textColor = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) {
+    val textColor = if (moneyRequest.owner?.id == CurrentUser(LocalContext.current).getUser()?.id) {
         Color.White
     } else {
         Color.Black
@@ -375,21 +375,23 @@ fun Bubbles(moneyRequest: Expense) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp, horizontal = 10.dp),
-        horizontalArrangement = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (moneyRequest.owner?.id == CurrentUser(LocalContext.current).getUser()?.id) Arrangement.End else Arrangement.Start
     ) {
         Column (
-            horizontalAlignment = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) Alignment.End else Alignment.Start
+            horizontalAlignment = if (moneyRequest.owner?.id == CurrentUser(LocalContext.current).getUser()?.id) Alignment.End else Alignment.Start
         ) {
-            val senderName = if (moneyRequest.owner.id != CurrentUser(LocalContext.current).getUser()?.id) moneyRequest.owner.name else "You"
+            val senderName = if (moneyRequest.owner?.id != CurrentUser(LocalContext.current).getUser()?.id) moneyRequest.owner?.name else "You"
 
-            Text (
-                text = senderName,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.secondary,
-                textAlign = TextAlign.Center,
-                softWrap = true,
-                modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp),
-            )
+            senderName?.let {
+                Text (
+                    text = it,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.secondary,
+                    textAlign = TextAlign.Center,
+                    softWrap = true,
+                    modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp),
+                )
+            }
 
             Surface(
                 color = bubbleColor,
