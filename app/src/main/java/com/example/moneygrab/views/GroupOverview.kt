@@ -301,8 +301,8 @@ fun GroupCard(
     image: String?
 ) {
     val amountColor = when {
-        amountOwed < 0 -> Color(235, 54, 54)
-        amountOwed > 0 -> Color(187, 227, 93)
+        amountOwed < 0 -> MaterialTheme.colorScheme.error
+        amountOwed > 0 -> MaterialTheme.colorScheme.primary
         else -> Color.Black
     }
 
