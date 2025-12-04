@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -50,6 +51,7 @@ class ChatViewModel() : ViewModel() {
     var errorHappened = mutableStateOf(false)
     var errorMessage = mutableStateOf("")
     var showCloseDialog = mutableStateOf(false)
+    var isRefreshing = mutableStateOf(false)
 
     fun setUser(context: Context) {
         CurrentUser(context).getUser()?.let {
@@ -59,59 +61,66 @@ class ChatViewModel() : ViewModel() {
 
     fun fetchGroupData(groupId: Int) {
         viewModelScope.launch {
-            var g: Group? = null
+            isRefreshing.value = true
+            try {
+                var g: Group? = null
 
-            val response = try {
-                api.getGroup(groupId)
-            } catch (e: Exception) {
-                errorMessage.value = "An error has occurred"
-                errorHappened.value = true
-                null
-            }
-            println(response)
-
-            if (!(response?.isSuccessful ?: false)) {
-                errorMessage.value = "The phone number or password is incorrect"
-                errorHappened.value = true
-            } else {
-                response.body()?.let {
-                    println("Group: ${it}")
-                    g = it
-                }
-            }
-
-            println(g)
-
-            g?.let { g ->
-                val expenses = try {
-                    api.getExpensesInGroup(g.id)
+                val response = try {
+                    api.getGroup(groupId)
                 } catch (e: Exception) {
-                    println(e.message)
+                    errorMessage.value = "An error has occurred"
+                    errorHappened.value = true
                     null
                 }
+                println(response)
 
-                expenses?.body()?.let { e ->
-                    var updatedExpenses: MutableList<Expense> = mutableListOf()
-                    println("Expenses: ${e}")
-                    for (expense: APIEndpoints.ChatExpense in e) {
-                        updatedExpenses.add(Expense(
-                            expense.id,
-                            expense.amount,
-                            expense.description,
-                            expense.group,
-                            User(
-                                expense.owner,
-                                "",
-                                expense.name,
-                                ""
-                            ),
-                            mutableListOf()))
+                if (!(response?.isSuccessful ?: false)) {
+                    errorMessage.value = "The phone number or password is incorrect"
+                    errorHappened.value = true
+                } else {
+                    response.body()?.let {
+                        println("Group: ${it}")
+                        g = it
                     }
-                    g.expenses = updatedExpenses
                 }
-                group = g
-            }
 
+                println(g)
+
+                g?.let { g ->
+                    val expenses = try {
+                        api.getExpensesInGroup(g.id)
+                    } catch (e: Exception) {
+                        println(e.message)
+                        null
+                    }
+
+                    expenses?.body()?.let { e ->
+                        var updatedExpenses: MutableList<Expense> = mutableListOf()
+                        println("Expenses: ${e}")
+                        for (expense: APIEndpoints.ChatExpense in e) {
+                            updatedExpenses.add(
+                                Expense(
+                                    expense.id,
+                                    expense.amount,
+                                    expense.description,
+                                    expense.group,
+                                    User(
+                                        expense.owner,
+                                        "",
+                                        expense.name,
+                                        ""
+                                    ),
+                                    mutableListOf()
+                                )
+                            )
+                        }
+                        g.expenses = updatedExpenses
+                    }
+                    group = g
+                }
+            } finally {
+                isRefreshing.value = false
+            }
             println("Number of expenses: ${group.expenses}")
         }
     }
@@ -243,7 +252,8 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
             messages = expenses,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            chatViewModel = chatViewModel
         )
 
         InputBar(onNotifyUsers, addExpense, chatViewModel = chatViewModel)
@@ -284,10 +294,11 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
         ) {
             Column(modifier = Modifier) {
                 Row(
-                    modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 0.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 0.dp),
 
-                verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(onClick = onBack) {
@@ -349,7 +360,7 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
 fun Bubbles(moneyRequest: Expense) {
     val colors = MaterialTheme.colorScheme
     //This needs to be implemented again when login authcontext is up and running
-     val bubbleColor = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) {
+    val bubbleColor = if (moneyRequest.owner.id == CurrentUser(LocalContext.current).getUser()?.id) {
         colors.primary
     } else {
         colors.primary.copy(alpha = 0.2f)
@@ -410,14 +421,24 @@ fun Bubbles(moneyRequest: Expense) {
 
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier) {
-    LazyColumn(
+fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier, chatViewModel: ChatViewModel) {
+    PullToRefreshBox(
+        onRefresh = {
+            chatViewModel.fetchGroupData(chatViewModel.group.id)
+            chatViewModel.fetchAmountOwed(chatViewModel.group.id)
+        },
         modifier = modifier,
-        contentPadding = PaddingValues(vertical = 8.dp)
+        isRefreshing = chatViewModel.isRefreshing.value,
     ) {
-        itemsIndexed(messages) { _, msg ->
-            Bubbles(moneyRequest = msg)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            itemsIndexed(messages) { _, msg ->
+                Bubbles(moneyRequest = msg)
+            }
         }
     }
 }
