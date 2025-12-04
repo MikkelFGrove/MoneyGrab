@@ -63,7 +63,7 @@ class ExpenseCreationViewModel(): ViewModel() {
     var group by mutableStateOf<Group?>(null)
     var stringAmount = mutableStateOf("")
     var description = mutableStateOf("")
-    var selectedLender = mutableStateOf<User?>(null);
+    var selectedLender = mutableStateOf<User?>(null)
     var selectedUsers = mutableStateListOf<User>()
     var expense: Expense? = null
 
@@ -102,46 +102,58 @@ class ExpenseCreationViewModel(): ViewModel() {
 
     fun createExpense(lender: User, context: Context, onCreateExpense: (Group?) -> Unit) {
         viewModelScope.launch {
-            if (Integer.parseInt(stringAmount.value) > 0){
-                var e = Expense(
-                    id = -1,
-                    amount = try {
-                        stringAmount.value.toFloat()
-                    } catch (e: Exception) {
-                        0f
-                    },
-                    description = description.value,
-                    owner = lender,
-                    group = group?.id ?: -1,
-                    payers = selectedUsers
-                )
-
-                val response = try {
-                    api.createExpense(
-                        body = e
-                    )
-                } catch (e: Exception) {
-                    println(e.message)
-                    null
-                }
-
-                response?.body()?.let { res ->
-                    e.id = res
-                    expense = e
-                }
-                onCreateExpense(group)
-            } else {
+            if (stringAmount.value == ""){
                 MotionToast.createColorToast(
                     context as Activity,
                     "Error",
-                    "Cannot be negative",
+                    "Cannot be negative or 0",
                     MotionToastStyle.ERROR,
                     MotionToast.GRAVITY_BOTTOM,
                     MotionToast.LONG_DURATION,
-                    ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
-                )
-                stringAmount.value = Integer.toString(0)
+                    ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular))
+            } else {
+                if (Integer.parseInt(stringAmount.value) > 0 ){
+                    var e = Expense(
+                        id = -1,
+                        amount = try {
+                            stringAmount.value.toFloat()
+                        } catch (e: Exception) {
+                            0f
+                        },
+                        description = description.value,
+                        owner = lender,
+                        group = group?.id ?: -1,
+                        payers = selectedUsers
+                    )
+
+                    val response = try {
+                        api.createExpense(
+                            body = e
+                        )
+                    } catch (e: Exception) {
+                        println(e.message)
+                        null
+                    }
+
+                    response?.body()?.let { res ->
+                        e.id = res
+                        expense = e
+                    }
+                    onCreateExpense(group)
+                } else {
+                    MotionToast.createColorToast(
+                        context as Activity,
+                        "Error",
+                        "Cannot be negative or 0",
+                        MotionToastStyle.ERROR,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                    )
+                    stringAmount.value = Integer.toString(0)
+                }
             }
+
         }
     }
 }
