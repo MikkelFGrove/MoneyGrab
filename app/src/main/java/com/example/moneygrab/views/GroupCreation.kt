@@ -91,7 +91,7 @@ class GroupViewModel() : ViewModel() {
     fun storeImage(img: Bitmap?) {
         img?.let {
             val os = ByteArrayOutputStream()
-            img.compress(Bitmap.CompressFormat.PNG, 20, os)
+            img.compress(Bitmap.CompressFormat.JPEG, 15, os)
             val byteArray: ByteArray = os.toByteArray()
             val encoded = Base64.encode(byteArray);
             image = encoded
@@ -110,6 +110,9 @@ class GroupViewModel() : ViewModel() {
 
             if (response?.code() == 200) {
                 response.body()?.let {
+                    for (user: User in it) {
+                        user.image = ""
+                    }
                     searchResult.clear()
                     searchResult.addAll(it)
                     searchResult.removeAll(chosenUsers)
@@ -130,6 +133,7 @@ class GroupViewModel() : ViewModel() {
                 wrongInputs.value = false
                 var users = mutableListOf<User>()
                 users.addAll(chosenUsers)
+                user.image = ""
                 users.add(user)
                 var response = try {
                     api.createGroup(
