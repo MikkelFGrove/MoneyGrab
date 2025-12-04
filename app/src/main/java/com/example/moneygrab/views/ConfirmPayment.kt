@@ -128,7 +128,7 @@ class ConfirmPaymentModelView() : ViewModel() {
             delay(1000)
 
             if (!(response?.isSuccessful ?: false)) {
-                errorMessage.value = "Not enough funds"
+                errorMessage.value = "A network error has occurred"
                 errorHasOccurred.value = true
 
                 MotionToast.createColorToast(

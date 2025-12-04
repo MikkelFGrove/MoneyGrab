@@ -1,5 +1,7 @@
 package com.example.moneygrab.views
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +55,8 @@ import com.example.authentication.CurrentUser
 import com.example.moneygrab.APIEndpoints
 import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
 
 class ExpenseCreationViewModel(): ViewModel() {
     private val api: APIEndpoints = RetrofitClient.getAPI()
@@ -60,6 +65,7 @@ class ExpenseCreationViewModel(): ViewModel() {
     var description = mutableStateOf("")
     var selectedUsers = mutableStateListOf<User>()
     var expense: Expense? = null
+
 
     fun fetchGroup(groupId: Int) {
         viewModelScope.launch {
@@ -93,33 +99,47 @@ class ExpenseCreationViewModel(): ViewModel() {
         }
     }
 
-    fun createExpense(lender: User) {
+    fun createExpense(lender: User, context: Context, onCreateExpense: (Group?) -> Unit) {
         viewModelScope.launch {
-            var e = Expense(
-                id = -1,
-                amount = try {
-                    stringAmount.value.toFloat()
-                } catch (e: Exception) {
-                    0f
-                },
-                description = description.value,
-                owner = lender,
-                group = group?.id ?: -1,
-                payers = selectedUsers
-            )
-
-            val response = try {
-                api.createExpense(
-                    body = e
+            if (Integer.parseInt(stringAmount.value) > 0){
+                var e = Expense(
+                    id = -1,
+                    amount = try {
+                        stringAmount.value.toFloat()
+                    } catch (e: Exception) {
+                        0f
+                    },
+                    description = description.value,
+                    owner = lender,
+                    group = group?.id ?: -1,
+                    payers = selectedUsers
                 )
-            } catch (e: Exception) {
-                println(e.message)
-                null
-            }
 
-            response?.body()?.let { res ->
-                e.id = res
-                expense = e
+                val response = try {
+                    api.createExpense(
+                        body = e
+                    )
+                } catch (e: Exception) {
+                    println(e.message)
+                    null
+                }
+
+                response?.body()?.let { res ->
+                    e.id = res
+                    expense = e
+                }
+                onCreateExpense(group)
+            } else {
+                MotionToast.createColorToast(
+                    context as Activity,
+                    "Error",
+                    "Cannot be negative",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                )
+                stringAmount.value = Integer.toString(0)
             }
         }
     }
@@ -192,10 +212,10 @@ fun AddExpenseView(groupId: Int, onCreateExpense: (Group?) -> Unit, back: () -> 
 
         Button(
             onClick = {
-                currentUser?.let {
-                    expenseCreationViewModel.createExpense(it)
-                    onCreateExpense(expenseCreationViewModel.group)
+                    currentUser?.let {
+                        expenseCreationViewModel.createExpense(it, context, onCreateExpense)
                 }
+
             },
             modifier = Modifier.fillMaxWidth()
         ) {
