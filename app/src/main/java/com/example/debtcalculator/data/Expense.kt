@@ -5,7 +5,7 @@ data class Expense (
     var amount: Float,
     var description: String,
     var group: Int,
-    var owner: User,
+    var owner: User?,
     var payers: List<User>
 )
 
