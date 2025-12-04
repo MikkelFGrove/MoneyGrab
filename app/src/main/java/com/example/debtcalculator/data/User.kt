@@ -4,5 +4,5 @@ data class User (
     val id: Int,
     val phoneNumber: String,
     val name: String,
-    val image: String?
+    var image: String?
 )

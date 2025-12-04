@@ -2,9 +2,11 @@ package com.example.moneygrab.views
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +29,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,7 +65,9 @@ import com.example.moneygrab.ui.theme.MoneyGrabTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.shadow.Shadow
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -144,47 +151,57 @@ class GroupPageViewModel : ViewModel() {
 fun Top(onProfilePressed: () -> Unit, groupPageViewModel: GroupPageViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.primary
+        //color = MaterialTheme.colorScheme.primary
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-
-            Text(
-                text = "Groups",
-                fontSize = 45.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
-
+        Column {
             Box(
                 modifier = Modifier
-                    .size(50.dp)
-                    .align(Alignment.CenterEnd)
-                    .clip(CircleShape)
-                    .clickable(onClick = onProfilePressed)
-                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                var painter: Painter? = null
 
-                groupPageViewModel.profilePicture.value?.let {
-                    painter = BitmapPainter(it)
-                }
-
-                if (painter == null) painter = painterResource(id = R.drawable.ic_profile_placeholder)
-
-                Image(
-                    painter = painter,
-                    contentDescription = "Profile Picture",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
+                Text(
+                    text = "Groups",
+                    fontSize = 45.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.Center)
                 )
+
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .align(Alignment.CenterEnd)
+                        .clip(CircleShape)
+                        .clickable(onClick = onProfilePressed)
+                        .background(MaterialTheme.colorScheme.background)
+
+                ) {
+                    var painter: Painter? = null
+
+                    groupPageViewModel.profilePicture.value?.let {
+                        painter = BitmapPainter(it)
+                    }
+
+                    if (painter == null) painter = painterResource(id = R.drawable.ic_profile_placeholder)
+
+                    Image(
+                        painter = painter,
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                    )
+                }
             }
+            HorizontalDivider(
+                modifier = Modifier
+                    .height(2.dp)
+                    .fillMaxWidth(),
+                thickness = 0.4.dp,
+                color = Color.Gray
+            )
         }
     }
 }
@@ -254,7 +271,7 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
         
         // Sticky "+" button
         Button(
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
             onClick = onCreateGroupClicked,
             shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier
@@ -267,7 +284,7 @@ fun GroupPage(onGroupClicked: (Group) -> Unit, onProfileClicked: () -> Unit, onC
                 text = "+",
                 fontSize = 45.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -294,12 +311,12 @@ fun GroupCard(
     Card(
         modifier = modifier
             .fillMaxWidth(0.9f)
-            .height(140.dp)
+            .height(180.dp)
             .padding(vertical = 8.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -314,34 +331,29 @@ fun GroupCard(
                     Image(
                         bitmap = bitmap,
                         contentDescription = "Image of the group",
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().height(120.dp).align(Alignment.TopCenter)
                     )
                 }
             }
+
             Text(
                 text = name,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
+                .align(Alignment.BottomStart)
+                .padding(8.dp)
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                    .align(Alignment.BottomCenter),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${amountOwed} DKK",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = amountColor
-                )
-            }
+
+            Text(
+                text = "${amountOwed} DKK",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = amountColor,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
+            )
         }
     }
 }

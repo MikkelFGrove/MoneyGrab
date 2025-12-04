@@ -286,7 +286,8 @@ fun TopBar(group: Group, groupName: String, chatViewModel: ChatViewModel, onBack
     }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
+        modifier = Modifier.fillMaxWidth(),
+        tonalElevation = 10.dp,
     ) {
         Box(
             modifier = Modifier
