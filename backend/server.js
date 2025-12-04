@@ -110,13 +110,13 @@ db.serialize(() => {
         ('Arbejdsholdet', 1, 'Internt holdchat til arbejdsrelaterede ting')
     `);
 
-    db.run(`INSERT INTO users (phoneNumber, password, name) VALUES
-        ('12345678', 'pass1', 'Anna'),
-        ('87654321', 'pass2', 'Mikkel'),
-        ('11223344', 'pass3', 'Sara'),
-        ('44332211', 'pass4', 'Jonas'),
-        ('77777777', '$2b$05$BoR0ZZHd5L9fpB0A9nfIEOvKBlnPu4mVnOopxgZY.3B3QrgRoUfy2', 'John Doe'),
-        ('69696969', '$2b$05$TPfjWVii6GzFFhiWcIt5LOWdtaoSwolkNsXWPEpP/7/n0Lvih6JK.', 'Andreas The G')
+    db.run(`INSERT INTO users (phoneNumber, password, name, image) VALUES
+        ('12345678', 'pass1', 'Anna', ''),
+        ('87654321', 'pass2', 'Mikkel', ''),
+        ('11223344', 'pass3', 'Sara', ''),
+        ('44332211', 'pass4', 'Jonas', ''),
+        ('77777777', '$2b$05$BoR0ZZHd5L9fpB0A9nfIEOvKBlnPu4mVnOopxgZY.3B3QrgRoUfy2', 'John Doe', ''),
+        ('69696969', '$2b$05$TPfjWVii6GzFFhiWcIt5LOWdtaoSwolkNsXWPEpP/7/n0Lvih6JK.', 'Andreas The G', '')
     `);
 
     db.run(`INSERT INTO usersInGroup (user, "group", timeStamp) VALUES
