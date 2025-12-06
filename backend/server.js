@@ -2,6 +2,8 @@ import express from 'express';
 import sqlite3  from 'sqlite3';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import { WebSocketServer } from "ws";
+import { createServer } from 'http';
 
 import DebtCalculatorService from './DebtCalculatorService.js';
 import User from './data/User.js';
@@ -11,6 +13,7 @@ import Group from './data/Group.js';
 let debtService = new DebtCalculatorService();
 
 let app = express();
+const server = createServer(app)
 
 app.use(express.json());
 app.use(cors());
@@ -173,6 +176,62 @@ db.serialize(() => {
     (5, 6)
     `);
 });
+
+// Websocket implementation
+const wss = new WebSocketServer({ server });
+const connectionMap = new Map()
+wss.on('connection', function connection(ws) {
+    ws.on('message', function message(data) {
+        handleMessage(Number(data.toString()), ws)
+    });
+
+    ws.on('close', function close() {
+        removeConnection(ws)
+        console.log('Client disconnected')
+    })
+});
+
+const handleMessage = (id, connection) => {
+    //console.log(id)
+    addConnection(id, connection)
+    connection.send(`Connection added to group: ${id}`);
+}
+
+const addConnection = (id, connection) => {
+    if (!connectionMap.has(id)) connectionMap.set(id, new Set());
+    connectionMap.get(id).add(connection)
+    console.log(`Connection added to group: ${id}`)
+}
+
+const removeConnection = (connection) => {
+    for (let id in connectionMap.keys()) {
+        if (connectionMap.get(id).has(connection)) connectionMap.get(id).delete(connection)
+    }
+}
+
+app.post('/groups/:id/notify', (req, res) => {
+    const { id } = req.params;
+    let { message } = req.body;
+
+    let convertedId = Number(id)
+    if (connectionMap.has(convertedId)) {
+        connectionMap.get(convertedId).forEach((con) => con.send(message))
+        return res.status(200).json(`Notification sent to ${connectionMap.get(convertedId).size} user(s)`)
+    }
+    return res.status(200).json('Notification was sent to 0 users, as no connections were available')
+})
+
+app.get('/users/:id/groups/id', (req, res) => {
+    let { id } = req.params
+
+    db.all(`SELECT groups.id FROM groups INNER JOIN usersInGroup uIG on groups.id = uIG."group" WHERE uIG.user = ?`,
+        [id],
+        (err, rows) => {
+            if (err) return res.status(500).json({error: err.message});
+            if (!rows) return res.status(404).json({error: 'groups not found'});
+            res.json(rows);
+        });
+})
 // get group messages
 app.get('/groups/:id/messages', (req, res) => {
 
@@ -712,4 +771,4 @@ app.post('/closeGroup', (req, res) => {
 
     
 
-app.listen(3000, () => console.log('The server is running on http://localhost:3000'));
+server.listen(3000, () => console.log('The server is running on http://localhost:3000'));

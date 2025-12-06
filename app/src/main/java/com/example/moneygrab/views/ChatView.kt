@@ -1,5 +1,6 @@
 package com.example.moneygrab.views
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +33,9 @@ import com.example.moneygrab.R
 import com.example.moneygrab.RetrofitClient
 import kotlinx.coroutines.launch
 import com.example.authentication.CurrentUser
+import retrofit2.Response
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
 
 
 class ChatViewModel() : ViewModel() {
@@ -163,6 +168,43 @@ class ChatViewModel() : ViewModel() {
             }
         }
     }
+
+    fun notifyUsers(context: Context) {
+        viewModelScope.launch {
+            var response = try {
+                api.notifyGroup(group.id, APIEndpoints.NotificationBody("Group '${group.name}' is now closed, time to pay"))
+            } catch (e: Exception) {
+                null
+            }
+
+            response?.let {
+                if (it.isSuccessful) {
+                    // MotionToast GREEN success
+                    MotionToast.createColorToast(
+                        context as Activity,
+                        "Success",
+                        "Notifications sent!",
+                        MotionToastStyle.SUCCESS,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                    )
+                } else {
+                    // MotionToast RED error
+                    MotionToast.createColorToast(
+                        context as Activity,
+                        "Error",
+                        errorMessage.value,
+                        MotionToastStyle.ERROR,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(context, www.sanju.motiontoast.R.font.helvetica_regular)
+                    )
+                }
+            }
+
+        }
+    }
 }
 
 @Composable
@@ -218,7 +260,7 @@ fun DialogCloseTheTab(
 @Composable
 fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
                onBack: () -> Unit = {}, onConfirmation: (Group) -> Unit,
-               onName: (Group) -> Unit, onNotifyUsers: () -> Unit) {
+               onName: (Group) -> Unit) {
     val chatViewModel: ChatViewModel = viewModel()
     var showCloseDialog by chatViewModel.showCloseDialog
     var groupName = chatViewModel.group.name
@@ -256,7 +298,7 @@ fun ChatScreen(groupId: Int, addExpense: (Group) -> Unit,
             chatViewModel = chatViewModel
         )
 
-        InputBar(onNotifyUsers, addExpense, chatViewModel = chatViewModel)
+        InputBar(addExpense, chatViewModel = chatViewModel)
 
         if (showCloseDialog) {
             DialogCloseTheTab(
@@ -446,7 +488,7 @@ fun MessagesList(messages: List<Expense>, modifier: Modifier = Modifier, chatVie
     }
 }
 @Composable
-fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewModel: ChatViewModel) {
+fun InputBar(addExpense: (Group) -> Unit, chatViewModel: ChatViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(), tonalElevation = 10.dp
     ) {
@@ -460,8 +502,12 @@ fun InputBar(onNotifyUsers: () -> Unit, addExpense: (Group) -> Unit, chatViewMod
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (chatViewModel.group.isClosed){
+                    val context = LocalContext.current
                     Button(
-                        onClick = { onNotifyUsers() },
+
+                        onClick = {
+                            chatViewModel.notifyUsers(context)
+                                  },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(5.dp),
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)

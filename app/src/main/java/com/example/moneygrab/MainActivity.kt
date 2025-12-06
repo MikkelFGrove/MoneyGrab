@@ -1,6 +1,7 @@
 package com.example.moneygrab
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -41,7 +42,7 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
-                showPaymentNotification()
+                showPaymentNotification("Pay up")
             } else {
                 Toast.makeText(
                     this@MainActivity,
@@ -51,9 +52,15 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationHelper.createChannel(this)
+        val user = CurrentUser(this).getUser()
+        val websocketClient = WebsocketClient(this)
+        user?.let {
+            websocketClient.connect(it)
+        }
         enableEdgeToEdge()
         setContent {
             MoneyGrabTheme {
@@ -62,7 +69,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun notifyUsers() {
+    fun notifyUsers(message: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
@@ -71,14 +78,14 @@ class MainActivity : ComponentActivity() {
                 return
             }
         }
-        showPaymentNotification()
+        showPaymentNotification(message)
     }
 
-    private fun showPaymentNotification() {
+    private fun showPaymentNotification(message: String) {
         NotificationHelper.sendNotification(
             this,
             "Time to pay!",
-            "The tab has been closed in your group and requests everyone to pay their debts"
+            message
         )
     }
 }
@@ -135,9 +142,6 @@ fun NavManager() {
                         onBack = { navController.navigate("groupPage") },
                         onConfirmation = { group ->
                             navController.navigate("confirmPayment/${group.id}")
-                        },
-                        onNotifyUsers = {
-                            activity?.notifyUsers()
                         },
                         onName = { group -> navController.navigate("groupDetails/${group.id}")}
                     )
