@@ -1,6 +1,7 @@
 package com.example.moneygrab.views
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -132,8 +134,6 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
 
         Spacer(modifier = Modifier.height(20.dp))
 
-
-
         Button(
             onClick = { loginViewModel.login(onLoginClicked, context) },
             modifier = Modifier
@@ -151,20 +151,16 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginClicked: () -> Unit, onSig
 
         Spacer(Modifier.height(12.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        Button(
+            onClick = { onSignupClicked() },
+            colors = ButtonColors(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.primary, Color.Transparent, Color.Transparent),
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(42.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
         ) {
-            Text(text = "Don’t have an account? ")
-
-            Text(
-                text = "Sign up",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(start = 4.dp)
-                    .clickable { onSignupClicked() }
-            )
+            Text("Sign up")
         }
     }
 }
