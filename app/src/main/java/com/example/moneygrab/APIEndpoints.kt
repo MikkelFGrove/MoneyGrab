@@ -23,6 +23,11 @@ interface APIEndpoints {
 
     @GET("/users/{id}/groups")
     suspend fun getGroups(@Path("id") id: Int): Response<List<Group>>
+    @GET("/users/{id}/groups/id")
+    suspend fun getGroupIds(@Path("id") id: Int): Response<List<GroupId>>
+
+    @POST("/groups/{id}/notify")
+    suspend fun notifyGroup(@Path("id") id: Int, @Body body: NotificationBody): Response<String>
 
     @POST("login")
     suspend fun login(@Body body: LoginData): Response<com.example.debtcalculator.data.User>
@@ -62,6 +67,10 @@ interface APIEndpoints {
 
     @PUT("/groups/{groupId}")
     suspend fun updateGroup(@Path("groupId") groupId: Int, @Body body: UpdateGroupData): Response<UpdateGroupResponse>
+
+    data class NotificationBody(
+        val message: String
+    )
 
     data class PayTransactionsRequest(
         val groupId: Int,

@@ -59,6 +59,13 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     // gson converter
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Gson
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // OkHTTP
+    implementation("com.squareup.okhttp3:okhttp:3.14.6")
+
     implementation(libs.androidx.compose.material3)
     implementation("androidx.wear.compose:compose-material:1.3.0")
     implementation ("androidx.wear.compose:compose-foundation:1.3.0")
