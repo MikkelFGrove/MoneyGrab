@@ -15,7 +15,7 @@ let debtService = new DebtCalculatorService();
 let app = express();
 const server = createServer(app)
 
-app.use(express.json());
+app.use(express.json({limit: "10mb"}));
 app.use(cors());
 
 let db = new sqlite3.Database('MoneyGrab')
@@ -67,6 +67,7 @@ db.serialize(() => {
     description TEXT NOT NULL,
     amount REAL NOT NULL,
     timeStamp TEXT NOT NULL,
+    isPaid INTEGER DEFAULT 0,
     FOREIGN KEY (owner) REFERENCES users(id),
     FOREIGN KEY ("group") REFERENCES groups(id)
     )`);
@@ -158,23 +159,6 @@ db.serialize(() => {
     (1, 4), (4, 4), (5,5), (1, 5)
     `);
 
-    db.run(`INSERT INTO transactions (sender, receiver, amount, creationTime, paymentTime, paid) VALUES
-    (2, 1, 200.00, datetime('now'), NULL, 0),
-    (3, 1, 800.00, datetime('now'), NULL, 0),
-    (5, 1, 200.00, datetime('now'), NULL, 0),
-    (1, 4, 60.00, datetime('now'), NULL, 0),
-    (5,4, 75.00, datetime('now'), NULL, 0),
-    (1,4, 75.00, datetime('now'), NULL, 0)
-    `);
-
-    db.run(`INSERT INTO transactionsInExpense (expense, "transaction") VALUES
-    (1, 1),  -- Mikkel → Anna
-    (1, 2),  -- Sara → Anna
-    (1, 3),  -- John → Anna
-    (4, 4),   -- Anna → Jonas (Netflix)
-    (5, 5),
-    (5, 6)
-    `);
 });
 
 // Websocket implementation
@@ -234,7 +218,6 @@ app.get('/users/:id/groups/id', (req, res) => {
 })
 // get group messages
 app.get('/groups/:id/messages', (req, res) => {
-
     let { id } = req.params;
     db.all(
         'SELECT * FROM messages WHERE "group" = ?',
@@ -354,8 +337,8 @@ app.post('/update/groups', (req, res) => {
 //Create new expense (This assumes that the payers is an array when being send to the backend)
 app.post('/expenses', (req, res) => {
     const { owner, group, description, amount, payers } = req.body;
-    db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp)
-            VALUES (?,?,?,?, CURRENT_TIMESTAMP)`,
+    db.run(`INSERT INTO expenses (owner, "group", description, amount, timeStamp, isPaid)
+            VALUES (?,?,?,?, CURRENT_TIMESTAMP, 0)`,
         [owner.id, group, description, amount],
         function(err) {
         if(err) return res.status(500).json({err: err.message});
@@ -490,7 +473,7 @@ app.get('/users/:id', (req, res) => {
 // Get expenses on a user
 app.get('/users/:id/expenses', (req, res) => {
     let { id } = req.params;
-    db.all(`SELECT expense.id, expense.owner, expense."group", expense.description, expense.amount, expense.timeStamp
+    db.all(`SELECT expense.id, expense.owner, expense."group", expense.description, expense.amount, expense.timeStamp, expense.isPaid
             FROM expenses expense
             INNER JOIN payersInExpense pIE on expense.id = pIE.expense
             WHERE pIE.user = ?`,
@@ -520,7 +503,7 @@ app.get('/users/:id/groups', (req, res) => {
 //Get expenses on a group
 app.get('/groups/:id/expenses', (req, res) => {
   const { id } = req.params;
-  db.all(`SELECT expenses.id, owner, name, "group", description, amount, timeStamp
+  db.all(`SELECT expenses.id, owner, name, "group", description, amount, timeStamp, isPaid
           FROM expenses
           INNER JOIN users u on expenses.owner = u.id
           WHERE "group" = ?`,
@@ -536,19 +519,12 @@ app.get('/groups/:id/expenses', (req, res) => {
 //Get nonpaid transactions on a group
 app.get('/groups/:id/outstandingPayments', (req, res) => {
     let { id } = req.params;
-    db.all(
-        `SELECT * from transactions WHERE paid = 0
-        AND id IN (
-            SELECT "transaction" FROM transactionsInExpense
-            JOIN expenses e on e.id = transactionsInExpense.expense
-            WHERE e."group" = ?
-        )`, [id],
-        (err, rows) => {
+
+    getOutstandingPayments(db, id, (err, rows) => {
             if(err) return res.status(500).json({error: err.message});
-            if(!rows) return res.status(404).json({error: 'No nonpaid transactions found'});
+            if(rows.length === 0) return res.status(404).json({error: 'No nonpaid transactions found'});
             res.json(rows);
-        }
-    );
+        });
 });
 
 // Get current sum of individual members in the group
@@ -625,7 +601,8 @@ app.get('/groups/:id/:user/sum', (req, res) => {
                                         expense.amount,
                                         expense.description,
                                         lender,
-                                        payerUsers
+                                        payerUsers,
+                                        expense.isPaid
                                     ));
 
                                     processed++;
@@ -637,7 +614,7 @@ app.get('/groups/:id/:user/sum', (req, res) => {
                                         const userBalance = balances.find(b => b.user.id == userId);
 
                                         if (!userBalance) {
-                                            return res.status(404).json({ error: "Giraffe balance not found" });
+                                            return res.json({ amount: 0 });
                                         }
 
                                         return res.json({amount: userBalance.balance});
@@ -668,107 +645,228 @@ app.post('/payTransactions', (req, res) => {
         [userId, groupId],
         function(err) {
             if(err) return res.status(500).json({error: err.message});
-            return res.json({ updated: this.changes, message: "Transactions successfully updated to paid"});
-        });
+            
+            const updatedCount = this.changes;
+
+            reopenGroup(groupId, db, (err, result) => {
+                if(err) return res.status(500).json({error: err.message});
+
+                return res.json({
+                    updated: updatedCount,
+                    message: "Transactions successfully updated to paid",
+                    groupStatus: result.status,
+                    ...(result.outstandingPayments ? { outstandingPayments: result.outstandingPayments} : {})
+                });
+            });
+
+        }
+    );
 });
 
-// Close the group
+
 app.post('/closeGroup', (req, res) => {
-    let { groupId } = req.body;
+    const { groupId} = req.body;
+    let responseSent = false;
 
-    //Closes the group
-    db.run('UPDATE groups SET isClosed = 1 WHERE id = ?', [groupId], async (err) => {
-        if (err) return res.status(500).json({ error: err.message });
+    db.run('UPDATE groups SET isClosed = 1 WHERE id = ?',
+        [groupId],
+        function(err) {
+            if(err) {
+                if(!responseSent) {
+                    responseSent = true;
+                    return res.status(500).json({error: err.message});
+                }
 
-        try {
-            //Get users in the group
-            const userRows = await new Promise((resolve, reject) => {
-                db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)', [groupId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            });
-
-            const users = userRows.map(u => new User(u.id, u.phoneNumber, u.name, u.image));
-
-            // Get expenses in the group
-            const expenseRows = await new Promise((resolve, reject) => {
-                db.all('SELECT * FROM expenses WHERE "group" = ?', [groupId], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            });
-
-            if (expenseRows.length === 0) {
-                return res.json({ message: "Group closed, no expenses to process" });
+                return;
             }
 
-            // Build Expense objects
-            let expenses = [];
-            for (const expense of expenseRows) {
-                const payerRows = await new Promise((resolve, reject) => {
-                    db.all('SELECT user FROM payersInExpense WHERE expense = ?', [expense.id], (err, rows) => {
-                        if (err) reject(err);
-                        else resolve(rows);
-                    });
-                });
+            db.all('SELECT * FROM users WHERE id IN (SELECT user FROM usersInGroup WHERE "group" = ?)',
+                [groupId],
+                (err2, userRows) => {
+                    if(err2) {
+                        if(!responseSent) {
+                            responseSent = true;
+                            return res.status(500).json({error: err2.message});
+                        }
+                        return;
+                    }
 
-                const payerUsers = payerRows.map(p => {
-                    const found = userRows.find(u => u.id === p.user);
-                    return new User(found.id, found.phoneNumber, found.name, found.image);
-                });
+                    let users = userRows.map(user => new User(user.id, user.phoneNumber, user.name, user.image));
 
-                const ownerRow = userRows.find(u => u.id === expense.owner);
-                const lender = new User(ownerRow.id, ownerRow.phoneNumber, ownerRow.name, ownerRow.image);
+                    db.all('SELECT * FROM expenses WHERE "group" = ? AND isPaid = 0',
+                        [groupId],
+                        (err3, expenseRows) => {
+                            if(err3) {
+                                if(!responseSent) {
+                                    responseSent = true;
+                                    return res.status(500).json({error: err3.message});
+                                }
+                                return;
+                            }
 
-                expenses.push(new Expense(expense.amount, expense.description, lender, payerUsers));
-            }
+                            if(expenseRows.length === 0) {
+                                if(!responseSent) {
+                                    responseSent = true;
+                                    return res.json({status: "Group closed and no trnsaction created due to no unpaid expenses"});
+                                }
 
-            // Calculate balances and transactions
-            const group = new Group("temp", users, expenses, [], groupId);
-            const balances = debtService.calculateBalances(group);
-            const transactions = debtService.determineTransactions(balances);
+                                return;
+                            }
 
-            if (transactions.length === 0) {
-                return res.json({ message: "Group is closed. No transactions needed." });
-            }
+                            let expenses = [];
+                            let expenseMap = {};
 
-            //  Insert transactions into DB
-            for (let transactionz of transactions) {
-                let transactionId = await new Promise((resolve, reject) => {
-                    db.run(
-                        'INSERT INTO transactions (sender, receiver, amount, creationTime, paid, paymentTime) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0, NULL)',
-                        [transactionz.sender.id, transactionz.receiver.id, transactionz.amount],
-                        function(err) {
-                            if (err) reject(err);
-                            else resolve(this.lastID);
+                            let processed = 0;
+
+                            for(let expense of expenseRows) {
+                                db.all('SELECT user FROM payersInExpense WHERE expense = ?',
+                                    [expense.id],
+                                    (err4, payerRows) => {
+                                        if(err4) {
+                                            if(!responseSent) {
+                                                responseSent = true;
+                                                return res.status(500).json({error: err4.message});
+                                            }
+                                            return;
+                                        }
+                                        
+                                        let payerUsers = payerRows.map(payer => {
+                                            let foundUser = userRows.find(user => user.id === payer.user);
+                                            return new User(foundUser.id, foundUser.phoneNumber, foundUser.name, foundUser.image);
+                                        });
+
+                                        let owner = userRows.find(user => user.id === expense.owner);
+                                        let lender = new User(owner.id, owner.phoneNumber, owner.name, owner.image);
+
+                                        let expenseObj = new Expense(expense.amount, expense.description, lender, payerUsers, expense.isPaid);
+
+                                        expenses.push(expenseObj);
+                                        expenseMap[expense.id] = expenseObj;
+
+                                        processed++;
+
+                                        if(processed !== expenseRows.length) {
+                                            return;
+                                        }
+
+                                        let group = new Group("temp", users, expenses, [], groupId);
+                                        let balances = debtService.calculateBalances(group);
+
+                                        let transactions = debtService.determineTransactions(balances);
+                                        
+                                        if(transactions.length === 0) {
+                                            if(!responseSent) {
+                                                return res.json({status: "Group is closed with no transactions"});
+                                            }
+                                            return;
+                                        }
+
+                                        for(let transaction of transactions) {
+                                               transaction.expenses = expenses.filter(exp => {
+                                                if(transaction.sender.id === exp.lender.id || exp.payers.some(payer => payer.id === transaction.sender.id)) {
+                                                    return true;
+                                                }
+                                                return false;
+                                            });
+                                        }
+
+                                        for(let transaction of transactions) {
+                                        
+                                            db.run('INSERT INTO transactions (sender, receiver, amount, creationTime, paid, paymentTime) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0, NULL)',
+                                                [transaction.sender.id, transaction.receiver.id, transaction.amount],
+                                                function(err5) {
+                                                    if(err5) {
+                                                        if(!responseSent) {
+                                                            responseSent = true;
+                                                            return res.status(500).json({error: err5.message});
+                                                        }
+                                                        return;
+                                                    }
+
+                                                    let transactionId = this.lastID;
+                                                    let linked = 0;
+                                                    for(let expense of transaction.expenses) {
+                                                        let expenseId = Object.keys(expenseMap).find(k => expenseMap[k] === expense);
+
+                                                        db.run('INSERT INTO transactionsInExpense (expense, "transaction") VALUES (?, ?)',
+                                                            [expenseId, transactionId],
+                                                            function(err6) {
+                                                                if(err6) {
+                                                                    if(!responseSent) {
+                                                                        responseSent = true;
+                                                                        return res.status(500).json({error: err6.message});
+                                                                    }
+                                                                    return;
+                                                                }
+
+                                                                linked++;
+
+                                                                if(linked === transaction.expenses.length
+                                                                    && transaction === transactions[transactions.length -1]
+                                                                    && !responseSent
+                                                                ) {
+                                                                    responseSent = true;
+                                                                    return res.json({status: "Group is closed and transactions have been created"});
+                                                                }
+                                                            }
+                                                        );
+                                                    }
+                                                }
+                                            );
+                                        }
+
+                                    }
+                                );
+                                
+                            }
                         }
                     );
-                });
-
-                // Link transaction to all relevant expenses
-                for (let expense of transactionz.expenses || []) {
-                    await new Promise((resolve, reject) => {
-                        db.run(
-                            'INSERT INTO transactionsInExpense (expense, "transaction") VALUES (?, ?)',
-                            [expense.id, transactionId],
-                            err => err ? reject(err) : resolve()
-                        );
-                    });
                 }
-            }
-
-            return res.json({
-                message: "Group is now closed and all transactions have been recorded",
-                transactions: transactions.map(t => t.toJSON())
-            });
-
-        } catch (error) {
-            return res.status(500).json({ error: error.message });
+            );
         }
-    });
+    );
 });
 
-    
+function reopenGroup(groupId, db, callback) {
+    getOutstandingPayments(db, groupId, (err, payments) => {
+
+        if(err) return callback(err);
+
+        if(payments.length > 0) {
+            return callback(null, {
+                status: "Group not reopened",
+                reason: "There are outstanding payments within the group",
+                outstandingPayments: payments
+            });
+        }
+        db.run('UPDATE groups SET isClosed = 0 WHERE id = ?',
+            [groupId],
+            function (err) {
+                if(err) return callback(err);
+
+                db.run('UPDATE expenses SET isPaid = 1 WHERE "group" = ?',
+                    [groupId],
+                    function(err) {
+                        if(err) return callback(err);
+
+                        callback(null, {status: "Group reopened"});
+
+                    }
+                );            
+            }
+        );
+    });
+}
+
+
+function getOutstandingPayments(db, groupId, callback) {
+        db.all(
+        `SELECT * from transactions WHERE paid = 0
+        AND id IN (
+            SELECT "transaction" FROM transactionsInExpense
+            JOIN expenses e on e.id = transactionsInExpense.expense
+            WHERE e."group" = ?
+        )`, [groupId], callback);
+}
 
 server.listen(3000, () => console.log('The server is running on http://localhost:3000'));

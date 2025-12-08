@@ -1,9 +1,10 @@
 class Expense {
-    constructor(amount, description, lender, payers = [] ) {
+    constructor(amount, description, lender, payers = [], isPaid ) {
         this.amount = amount;
         this.description = description;
         this.lender = lender;
         this.payers = payers;
+        this.isPaid = isPaid;
     }
 
     toJSON() {
@@ -11,7 +12,8 @@ class Expense {
             amount: this.amount,
             description: this.description,
             lender: this.lender.toJSON(),
-            payers: this.payers.toJSON()
+            payers: this.payers.toJSON(),
+            isPaid: this.isPaid
         };
     }
 }

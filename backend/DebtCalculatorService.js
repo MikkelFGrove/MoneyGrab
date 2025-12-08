@@ -11,6 +11,10 @@ class DebtCalculatorService {
         const lender = expense.lender;
         const pricePerUser = expense.amount / expense.payers.length;
 
+        if(expense.isPaid === 1) {
+            continue;
+        }
+
         // Check if lender is among payers
         const lenderOwesPart = expense.payers.some(p => p.phoneNumber === lender.phoneNumber);
         const lenderBalance = lenderOwesPart ? expense.amount - pricePerUser : expense.amount;

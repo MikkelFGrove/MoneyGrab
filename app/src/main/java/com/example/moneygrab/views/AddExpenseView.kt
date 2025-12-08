@@ -100,7 +100,7 @@ class ExpenseCreationViewModel(): ViewModel() {
         }
     }
 
-    fun createExpense(lender: User, context: Context, onCreateExpense: (Group?) -> Unit) {
+    fun createExpense(user: User, context: Context, onCreateExpense: (Group?) -> Unit) {
         viewModelScope.launch {
             if (stringAmount.value == ""){
                 MotionToast.createColorToast(
@@ -121,7 +121,7 @@ class ExpenseCreationViewModel(): ViewModel() {
                             0f
                         },
                         description = description.value,
-                        owner = lender,
+                        owner = selectedLender.value,
                         group = group?.id ?: -1,
                         payers = selectedUsers
                     )
@@ -283,12 +283,14 @@ fun AddLenderToExpense(expenseCreationViewModel: ExpenseCreationViewModel, curre
                 modifier = Modifier
                     .padding(12.dp)
             ) {
-                Text(
-                    text = "Select user",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Medium
+                expenseCreationViewModel.selectedLender.value?.let {
+                    Text(
+                        text = it.name,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium
+                        )
                     )
-                )
+                }
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = "Dropdown icon"
