@@ -705,11 +705,17 @@ app.post('/closeGroup', (req, res) => {
                             }
 
                             if(expenseRows.length === 0) {
-                                if(!responseSent) {
-                                    responseSent = true;
-                                    return res.json({status: "Group closed and no trnsaction created due to no unpaid expenses"});
-                                }
-
+                                    reopenGroup(groupId, db, (err, result) => {
+                                                if(err) return res.status(500).json({error: err.message});
+                                                if(!responseSent) {
+                                                    responseSent = true;
+                                                     return res.json({
+                                                    message: "Transactions successfully updated to paid",
+                                                    groupStatus: result.status,
+                                                    ...(result.outstandingPayments ? { outstandingPayments: result.outstandingPayments} : {})
+                                                });
+                                                }
+                                            });
                                 return;
                             }
 
@@ -755,9 +761,17 @@ app.post('/closeGroup', (req, res) => {
                                         let transactions = debtService.determineTransactions(balances);
                                         
                                         if(transactions.length === 0) {
-                                            if(!responseSent) {
-                                                return res.json({status: "Group is closed with no transactions"});
-                                            }
+                                              reopenGroup(groupId, db, (err, result) => {
+                                                if(err) return res.status(500).json({error: err.message});
+                                                if(!responseSent) {
+                                                    responseSent = true;
+                                                     return res.json({
+                                                    message: "Transactions successfully updated to paid",
+                                                    groupStatus: result.status,
+                                                    ...(result.outstandingPayments ? { outstandingPayments: result.outstandingPayments} : {})
+                                                });
+                                                }
+                                            });
                                             return;
                                         }
 
