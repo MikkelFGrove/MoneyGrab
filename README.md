@@ -9,3 +9,7 @@ After this, just run $node server.js, and the backend server should now be runni
 The SlideToUnlock component has been created from the following 
 Blogpost: https://medium.com/flat-pack-tech/make-a-simple-slide-to-unlock-in-jetpack-compose-c0161acfbbda
 GitHub: https://github.com/patrick-elmquist/Demo-SlideToUnlock?tab=readme-ov-file
+
+The Notification Theme has been created with the following
+MotionToast: https://github.com/Spikeysanju/MotionToast
+
