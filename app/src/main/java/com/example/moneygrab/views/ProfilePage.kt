@@ -73,7 +73,7 @@ class ProfilePageViewModel() : ViewModel() {
     fun saveUser(context: Context) {
         viewModelScope.launch {
             val response = try {
-                api.updateUser(APIEndpoints.UpdateUser(    id = userId.value, phoneNumber = phoneNumber.value, name = name.value, image = ""))
+                api.updateUser(APIEndpoints.UpdateUser(    id = userId.value, phoneNumber = phoneNumber.value, name = name.value, image = currentUser.value?.image ?: ""))
             } catch (e: Exception) {
                 errorMessage.value = "An error has occurred"
                 null

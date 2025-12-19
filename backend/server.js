@@ -178,7 +178,7 @@ wss.on('connection', function connection(ws) {
 const handleMessage = (id, connection) => {
     //console.log(id)
     addConnection(id, connection)
-    connection.send(`Connection added to group: ${id}`);
+    //connection.send(`Connection added to group: ${id}`);
 }
 
 const addConnection = (id, connection) => {
